@@ -18,8 +18,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(4)
 
     const body = this.body as Phaser.Physics.Arcade.Body
-    body.setSize(38, 42)
-    body.setOffset(45, 42)
+    // body.setSize com center=true (padrão) centraliza automaticamente no sprite
+    body.setSize(36, 40)
     body.setVelocityX(this.speed)
   }
 

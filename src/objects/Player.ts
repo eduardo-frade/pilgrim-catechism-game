@@ -28,11 +28,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this)
     scene.physics.add.existing(this)
 
-    const body = this.body as Phaser.Physics.Arcade.Body
-    body.setSize(28, 46)
-    body.setMaxVelocityX(300)
+    // setScale ANTES de setSize para o auto-centering usar o displayWidth correto
     this.setScale(PLAYER_SCALE)
     this.setDepth(5)
+
+    const body = this.body as Phaser.Physics.Arcade.Body
+    body.setSize(28, 46)   // agora displayWidth = 48.6px → auto-centra corretamente
+    body.setMaxVelocityX(300)
 
     this.cursors  = scene.input.keyboard!.createCursorKeys()
     this.keySpace = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
@@ -85,14 +87,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (downDown && onGround) {
       if (!this.isCrouching) {
         this.isCrouching = true
-        body.setSize(28, 28); body.setOffset(0, 18)
-        this.setScale(PLAYER_SCALE, PLAYER_SCALE * 0.65)
+        this.setScale(PLAYER_SCALE, PLAYER_SCALE * 0.65)  // escala antes do setSize
+        body.setSize(24, 28)   // auto-centra no display escalonado
       }
       body.setVelocityX(body.velocity.x * 0.6)
     } else if (this.isCrouching) {
       this.isCrouching = false
-      body.setSize(28, 46); body.setOffset(0, 0)
-      this.setScale(PLAYER_SCALE)
+      this.setScale(PLAYER_SCALE)    // restaura escala antes do setSize
+      body.setSize(28, 46)            // auto-centra no display normal
     }
 
     // ── Mover ← → ──────────────────────────────────────────────────
