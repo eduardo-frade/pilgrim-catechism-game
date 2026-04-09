@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import catechism from '../data/catechism.json'
 import worlds from '../data/worlds.json'
 import { StorageManager } from '../data/StorageManager'
+import { AudioManager } from '../data/AudioManager'
 
 interface QuizData {
   phaseIndex: number
@@ -11,15 +12,13 @@ interface QuizData {
 
 export class QuizScene extends Phaser.Scene {
   private phaseIndex = 0
-  private score = 0
-  private lives = 1
-  private attempts = 0
+  private score      = 0
+  private lives      = 1
+  private attempts   = 0
   private question!: typeof catechism[0]
   private world = worlds.worlds[0]
 
-  constructor() {
-    super({ key: 'QuizScene' })
-  }
+  constructor() { super({ key: 'QuizScene' }) }
 
   init(data: QuizData) {
     this.phaseIndex = data.phaseIndex ?? 0
@@ -30,215 +29,176 @@ export class QuizScene extends Phaser.Scene {
   }
 
   create() {
+    AudioManager.init(this)
     const { width, height } = this.cameras.main
-    const phase = this.world.phases[this.phaseIndex]
+    const phase = this.world.phases[this.phaseIndex % this.world.phases.length]
 
-    // Background — warm golden sky matching reference art
     this.drawBackground(width, height)
 
-    // Phase title
-    this.add.text(width / 2, 20, `Fase ${this.phaseIndex + 1}: ${phase.title}`, {
-      fontSize: '14px', color: '#8b5e1a', fontFamily: 'Arial', fontStyle: 'bold'
+    // ── Peregrino decorativo no canto ────────────────────────────────
+    this.drawSmallPilgrim(width - 60, height - 55)
+
+    // ── Título da fase ────────────────────────────────────────────────
+    this.add.text(width / 2, 18, `Fase ${this.phaseIndex + 1}: ${phase.title}`, {
+      fontSize: '13px', color: '#7a4a00', fontFamily: 'Arial', fontStyle: 'bold'
     }).setOrigin(0.5)
 
-    // Question card
-    const cardY = 90
-    const card = this.add.graphics()
-    card.fillStyle(0xfdf3c0, 0.97)
-    card.fillRoundedRect(40, cardY - 10, width - 80, 120, 12)
-    card.lineStyle(2, 0xe8a020, 1)
-    card.strokeRoundedRect(40, cardY - 10, width - 80, 120, 12)
+    // ── Card da pergunta ──────────────────────────────────────────────
+    const cardY = 38
+    const card  = this.add.graphics()
+    card.fillStyle(0xfdf6d0, 0.97)
+    card.fillRoundedRect(30, cardY, width - 60, 130, 14)
+    card.lineStyle(2.5, 0xe8a020, 1)
+    card.strokeRoundedRect(30, cardY, width - 60, 130, 14)
 
-    this.add.text(width / 2, cardY + 10, `Pergunta ${this.question.number}`, {
-      fontSize: '13px', color: '#e8a020', fontFamily: 'Arial', fontStyle: 'bold'
+    // Ícone livro
+    this.add.text(52, cardY + 18, '📖', { fontSize: '20px' }).setOrigin(0.5)
+
+    this.add.text(width / 2, cardY + 18, `Pergunta ${this.question.number} do Catecismo`, {
+      fontSize: '12px', color: '#e8a020', fontFamily: 'Arial', fontStyle: 'bold'
     }).setOrigin(0.5)
 
-    this.add.text(width / 2, cardY + 32, this.question.simplified, {
-      fontSize: '15px', color: '#1a0a2e', fontFamily: 'Arial',
-      wordWrap: { width: width - 100 }, align: 'center', lineSpacing: 4
+    this.add.text(width / 2, cardY + 55, this.question.simplified, {
+      fontSize: '14px', color: '#1a0a2e', fontFamily: 'Arial',
+      wordWrap: { width: width - 80 }, align: 'center', lineSpacing: 5
     }).setOrigin(0.5)
 
-    // Speak button
-    const speakBtn = this.add.text(width - 60, cardY + 92, '🔊 Ouvir', {
-      fontSize: '13px', color: '#e8a020', fontFamily: 'Arial', fontStyle: 'bold'
+    // Botão ouvir
+    const speakBtn = this.add.text(width - 55, cardY + 112, '🔊 Ouvir', {
+      fontSize: '12px', color: '#e8a020', fontFamily: 'Arial', fontStyle: 'bold',
+      backgroundColor: '#fff8e155', padding: { x: 6, y: 3 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true })
 
-    speakBtn.on('pointerdown', () => this.narrate(this.question.simplified))
+    speakBtn.on('pointerdown', () => AudioManager.speak(this.question.simplified))
     speakBtn.on('pointerover', () => speakBtn.setColor('#f5c842'))
-    speakBtn.on('pointerout', () => speakBtn.setColor('#e8a020'))
+    speakBtn.on('pointerout',  () => speakBtn.setColor('#e8a020'))
 
-    // Auto-narrate
-    this.time.delayedCall(500, () => this.narrate(this.question.simplified))
+    // Auto-narrar
+    this.time.delayedCall(400, () => {
+      AudioManager.play(`q${this.question.number}_text`)
+    })
 
-    // Answer label
-    this.add.text(width / 2, 220, 'Qual é a resposta certa?', {
-      fontSize: '16px', color: '#1a0a2e', fontFamily: 'Arial', fontStyle: 'bold'
+    // ── Pergunta + botões de resposta ─────────────────────────────────
+    this.add.text(width / 2, 188, 'Qual é a resposta certa?', {
+      fontSize: '15px', color: '#1a0a2e', fontFamily: 'Arial', fontStyle: 'bold'
     }).setOrigin(0.5)
 
-    // Shuffle answers
-    const answers = this.shuffleAnswers([
-      { text: this.question.correct, isCorrect: true },
+    const answers = this.shuffle([
+      { text: this.question.correct,  isCorrect: true  },
       { text: this.question.wrong[0], isCorrect: false },
       { text: this.question.wrong[1], isCorrect: false }
     ])
 
-    // Answer buttons
-    answers.forEach((answer, i) => {
-      this.createAnswerButton(width / 2, 265 + i * 58, answer.text, answer.isCorrect, i)
+    answers.forEach((ans, i) => {
+      this.createAnswerBtn(width / 2, 230 + i * 62, ans.text, ans.isCorrect)
     })
 
-    // Score display
-    this.add.text(width - 20, 20, `⭐ ${this.score}`, {
-      fontSize: '14px', color: '#1a0a2e', fontFamily: 'Arial', fontStyle: 'bold'
+    // ── Indicador de vidas + pontuação ────────────────────────────────
+    this.add.text(12, 18, `${'❤️'.repeat(this.lives)}`, {
+      fontSize: '14px'
+    }).setOrigin(0, 0.5)
+
+    this.add.text(width - 12, 18, `⭐ ${this.score}`, {
+      fontSize: '13px', color: '#7a4a00', fontFamily: 'Arial', fontStyle: 'bold'
     }).setOrigin(1, 0.5)
   }
 
-  private drawBackground(width: number, height: number) {
-    // Sky — warm cream/yellow gradient like reference
-    const sky = this.add.graphics()
-    sky.fillGradientStyle(0xfff8e1, 0xfff8e1, 0xf5d87a, 0xf5d87a, 1)
-    sky.fillRect(0, 0, width, height)
-
-    // Distant hills (light, soft)
-    const hills = this.add.graphics()
-    hills.fillStyle(0xe8d090, 0.6)
-    hills.fillEllipse(150, height - 30, 500, 200)
-    hills.fillEllipse(500, height - 10, 600, 220)
-    hills.fillEllipse(750, height - 50, 400, 180)
-
-    // Ground
-    hills.fillStyle(0xc8a050, 1)
-    hills.fillRect(0, height - 50, width, 50)
-
-    // Golden path
-    hills.fillStyle(0xf5c842, 0.5)
-    hills.fillEllipse(width / 2, height - 30, 180, 30)
-  }
-
-  private createAnswerButton(x: number, y: number, text: string, isCorrect: boolean, _index: number) {
+  private createAnswerBtn(x: number, y: number, text: string, isCorrect: boolean) {
     const { width } = this.cameras.main
-    const btnW = width - 100
+    const bw = width - 80
 
-    const container = this.add.container(x, y)
-
+    const c  = this.add.container(x, y)
     const bg = this.add.graphics()
-    bg.fillStyle(0xffffff, 1)
-    bg.fillRoundedRect(-btnW / 2, -22, btnW, 44, 8)
-    bg.lineStyle(2, 0xc8a050, 1)
-    bg.strokeRoundedRect(-btnW / 2, -22, btnW, 44, 8)
 
-    const label = this.add.text(0, 0, text, {
-      fontSize: '13px', color: '#1a0a2e', fontFamily: 'Arial',
-      wordWrap: { width: btnW - 20 }, align: 'center'
-    }).setOrigin(0.5)
-
-    container.add([bg, label])
-    container.setSize(btnW, 44)
-    container.setInteractive({ useHandCursor: true })
-
-    container.on('pointerover', () => {
+    const drawBg = (fill: number, border: number) => {
       bg.clear()
-      bg.fillStyle(0xfff3d0, 1)
-      bg.fillRoundedRect(-btnW / 2, -22, btnW, 44, 8)
-      bg.lineStyle(2, 0xe8a020, 1)
-      bg.strokeRoundedRect(-btnW / 2, -22, btnW, 44, 8)
-    })
-
-    container.on('pointerout', () => {
-      bg.clear()
-      bg.fillStyle(0xffffff, 1)
-      bg.fillRoundedRect(-btnW / 2, -22, btnW, 44, 8)
-      bg.lineStyle(2, 0xc8a050, 1)
-      bg.strokeRoundedRect(-btnW / 2, -22, btnW, 44, 8)
-    })
-
-    container.on('pointerdown', () => {
-      container.disableInteractive()
-      this.handleAnswer(isCorrect, bg, label, btnW)
-    })
-  }
-
-  private handleAnswer(
-    isCorrect: boolean,
-    bg: Phaser.GameObjects.Graphics,
-    label: Phaser.GameObjects.Text,
-    btnW: number
-  ) {
-    if (isCorrect) {
-      // Green flash
-      bg.clear()
-      bg.fillStyle(0x27ae60, 1)
-      bg.fillRoundedRect(-btnW / 2, -22, btnW, 44, 8)
-      label.setColor('#ffffff')
-
-      this.narrate('Muito bem! Resposta certa!')
-
-      StorageManager.markQuestionAnswered(this.question.number)
-      StorageManager.save({ currentPhase: this.phaseIndex + 1 })
-
-      this.time.delayedCall(1200, () => {
-        this.scene.start('GameScene', {
-          phaseIndex: this.phaseIndex,
-          score: this.score,
-          lives: this.lives
-        })
-      })
-    } else {
-      this.attempts++
-      bg.clear()
-      bg.fillStyle(0xe74c3c, 1)
-      bg.fillRoundedRect(-btnW / 2, -22, btnW, 44, 8)
-      label.setColor('#ffffff')
-
-      const messages = [
-        'Quase! Tente de novo!',
-        'Não desista! Você consegue!',
-        'Pense bem... leia a pergunta novamente!'
-      ]
-      const msg = messages[Math.min(this.attempts - 1, messages.length - 1)]
-      this.narrate(msg)
-
-      // Show encouragement popup
-      this.showEncouragement(msg)
-
-      this.time.delayedCall(1500, () => {
-        this.scene.restart({
-          phaseIndex: this.phaseIndex,
-          score: this.score,
-          lives: this.lives
-        })
-      })
+      bg.fillStyle(fill, 1);   bg.fillRoundedRect(-bw / 2, -24, bw, 48, 9)
+      bg.lineStyle(2, border, 1); bg.strokeRoundedRect(-bw / 2, -24, bw, 48, 9)
     }
-  }
+    drawBg(0xffffff, 0xc8a050)
 
-  private showEncouragement(message: string) {
-    const { width, height } = this.cameras.main
-    const popup = this.add.graphics()
-    popup.fillStyle(0x1a0a2e, 0.9)
-    popup.fillRoundedRect(width / 2 - 160, height / 2 - 40, 320, 80, 12)
-
-    this.add.text(width / 2, height / 2, message, {
-      fontSize: '16px', color: '#f5c842', fontFamily: 'Arial',
-      fontStyle: 'bold', align: 'center', wordWrap: { width: 290 }
+    const lbl = this.add.text(0, 0, text, {
+      fontSize: '13px', color: '#1a0a2e', fontFamily: 'Arial',
+      wordWrap: { width: bw - 24 }, align: 'center'
     }).setOrigin(0.5)
+
+    c.add([bg, lbl])
+    c.setSize(bw, 48).setInteractive({ useHandCursor: true })
+
+    c.on('pointerover', () => drawBg(0xfff8e0, 0xe8a020))
+    c.on('pointerout',  () => drawBg(0xffffff, 0xc8a050))
+    c.on('pointerdown', () => {
+      c.disableInteractive()
+      if (isCorrect) {
+        drawBg(0x27ae60, 0x1e8449); lbl.setColor('#ffffff')
+        AudioManager.play('correct')
+        StorageManager.markQuestionAnswered(this.question.number)
+        StorageManager.save({ currentPhase: this.phaseIndex + 1 })
+        this.time.delayedCall(1000, () => {
+          this.scene.start('GameScene', { phaseIndex: this.phaseIndex, score: this.score, lives: this.lives })
+        })
+      } else {
+        this.attempts++
+        drawBg(0xe74c3c, 0xc0392b); lbl.setColor('#ffffff')
+        const key = `wrong_${Math.min(this.attempts, 3)}` as 'wrong_1' | 'wrong_2' | 'wrong_3'
+        AudioManager.play(key)
+        const msgs = ['Quase! Tente de novo!', 'Não desista! Você consegue!', 'Pense bem e tente novamente!']
+        this.showEncouragement(msgs[Math.min(this.attempts - 1, 2)])
+        this.time.delayedCall(1600, () => {
+          this.scene.restart({ phaseIndex: this.phaseIndex, score: this.score, lives: this.lives })
+        })
+      }
+    })
   }
 
-  private shuffleAnswers<T>(arr: T[]): T[] {
+  private showEncouragement(msg: string) {
+    const { width, height } = this.cameras.main
+    const p = this.add.graphics().setDepth(20)
+    p.fillStyle(0x1a0a2e, 0.92)
+    p.fillRoundedRect(width / 2 - 170, height / 2 - 36, 340, 72, 14)
+    this.add.text(width / 2, height / 2, msg, {
+      fontSize: '16px', color: '#f5c842', fontStyle: 'bold', fontFamily: 'Arial',
+      align: 'center', wordWrap: { width: 310 }
+    }).setOrigin(0.5).setDepth(21)
+  }
+
+  private drawBackground(width: number, height: number) {
+    const sky = this.add.graphics()
+    sky.fillGradientStyle(0xfff8e1, 0xfff8e1, 0xf5d060, 0xf5d060, 1)
+    sky.fillRect(0, 0, width, height)
+    const h = this.add.graphics()
+    h.fillStyle(0xe8d090, 0.55)
+    h.fillEllipse(150, height - 25, 480, 190)
+    h.fillEllipse(520, height - 15, 560, 210)
+    h.fillEllipse(730, height - 40, 380, 170)
+    h.fillStyle(0xc8a050, 1); h.fillRect(0, height - 48, width, 48)
+    h.fillStyle(0x7ab030, 1); h.fillRect(0, height - 48, width, 6)
+    h.fillStyle(0xf5c842, 0.4); h.fillEllipse(width / 2, height - 28, 200, 34)
+  }
+
+  private drawSmallPilgrim(x: number, y: number) {
+    const g = this.add.graphics()
+    // cajado
+    g.fillStyle(0x7a4f2a, 1); g.fillRect(x + 10, y - 40, 3, 42)
+    // robe
+    g.fillStyle(0xd4a855, 1); g.fillRoundedRect(x - 10, y - 28, 20, 28, 4)
+    // cabeça
+    g.fillStyle(0xf0c088, 1); g.fillCircle(x, y - 34, 12)
+    // cabelo
+    g.fillStyle(0x3a1f08, 1); g.fillEllipse(x, y - 42, 20, 10)
+    // olhos
+    g.fillStyle(0x111111, 1); g.fillCircle(x - 4, y - 34, 2); g.fillCircle(x + 4, y - 34, 2)
+    // bochechas
+    g.fillStyle(0xffaaaa, 0.5); g.fillCircle(x - 8, y - 31, 3); g.fillCircle(x + 8, y - 31, 3)
+    this.tweens.add({ targets: g, y: '-=5', yoyo: true, repeat: -1, duration: 900, ease: 'Sine.easeInOut' })
+  }
+
+  private shuffle<T>(arr: T[]): T[] {
     const a = [...arr]
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [a[i], a[j]] = [a[j], a[i]]
     }
     return a
-  }
-
-  private narrate(text: string) {
-    if (!('speechSynthesis' in window)) return
-    window.speechSynthesis.cancel()
-    const utt = new SpeechSynthesisUtterance(text)
-    utt.lang = 'pt-BR'
-    utt.rate = 0.9
-    utt.pitch = 1.1
-    window.speechSynthesis.speak(utt)
   }
 }
