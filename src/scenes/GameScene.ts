@@ -466,11 +466,22 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnEnemies(layout: typeof PHASE_LAYOUTS[0]) {
-    const groundY = this.game.canvas.height - 48
     const safeZoneEnd = layout.playerStart.x + 220  // inimigos não nascem perto do jogador
     layout.enemies.forEach(e => {
       if (e.x < safeZoneEnd) return
-      const enemy = new Enemy(this, e.x, groundY, e.patrol[0], e.patrol[1], this.world.enemy.speed)
+
+      // Detect the bottommost platform that contains this enemy's x position
+      // so enemies on floating platforms spawn on the correct platform (not groundY)
+      let spawnY = this.game.canvas.height - 48  // fallback
+      let bestPlatformTop = -1
+      for (const [px, py, pw] of layout.platforms) {
+        if (e.x >= px && e.x <= px + pw && py > bestPlatformTop) {
+          bestPlatformTop = py
+          spawnY = py - 22   // center just above platform top (enemy half-height ≈ 22px)
+        }
+      }
+
+      const enemy = new Enemy(this, e.x, spawnY, e.patrol[0], e.patrol[1], this.world.enemy.speed)
       this.enemies.push(enemy)
     })
   }
