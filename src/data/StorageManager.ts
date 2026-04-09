@@ -1,6 +1,7 @@
 export interface GameSave {
   currentPhase: number
   totalScore: number
+  lives: number          // vidas globais (1-3)
   answeredQuestions: number[]
   worldId: number
 }
@@ -10,6 +11,7 @@ const SAVE_KEY = 'pilgrim_catechism_save'
 const defaultSave: GameSave = {
   currentPhase: 1,
   totalScore: 0,
+  lives: 1,              // começa com 1 vida
   answeredQuestions: [],
   worldId: 1
 }

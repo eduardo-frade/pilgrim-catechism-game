@@ -6,11 +6,13 @@ import { StorageManager } from '../data/StorageManager'
 interface QuizData {
   phaseIndex: number
   score: number
+  lives?: number
 }
 
 export class QuizScene extends Phaser.Scene {
   private phaseIndex = 0
   private score = 0
+  private lives = 1
   private attempts = 0
   private question!: typeof catechism[0]
   private world = worlds.worlds[0]
@@ -21,9 +23,10 @@ export class QuizScene extends Phaser.Scene {
 
   init(data: QuizData) {
     this.phaseIndex = data.phaseIndex ?? 0
-    this.score = data.score ?? StorageManager.load().totalScore
-    this.question = catechism[this.phaseIndex % catechism.length]
-    this.attempts = 0
+    this.score      = data.score  ?? StorageManager.load().totalScore
+    this.lives      = data.lives  ?? StorageManager.load().lives
+    this.question   = catechism[this.phaseIndex % catechism.length]
+    this.attempts   = 0
   }
 
   create() {
@@ -176,7 +179,8 @@ export class QuizScene extends Phaser.Scene {
       this.time.delayedCall(1200, () => {
         this.scene.start('GameScene', {
           phaseIndex: this.phaseIndex,
-          score: this.score
+          score: this.score,
+          lives: this.lives
         })
       })
     } else {
