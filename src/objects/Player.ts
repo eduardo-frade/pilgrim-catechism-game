@@ -2,12 +2,14 @@ import Phaser from 'phaser'
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
-  private wasd!: Record<string, Phaser.Input.Keyboard.Key>
+  private keyV!: Phaser.Input.Keyboard.Key
+  private keySpace!: Phaser.Input.Keyboard.Key
   private projectiles!: Phaser.Physics.Arcade.Group
   private canJump = false
   private jumpCount = 0
   private lastShot = 0
   private isHurt = false
+  private isCrouching = false
   private lives = 3
   private onDamageCallback?: (lives: number) => void
   private facingRight = true
@@ -23,12 +25,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(5)
 
     this.cursors = scene.input.keyboard!.createCursorKeys()
-    this.wasd = {
-      up: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
-      left: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A),
-      right: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D),
-      shoot: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
-    }
+    // SPACE = pular, V = arremessar artefato
+    this.keySpace = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
+    this.keyV     = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.V)
 
     this.projectiles = scene.physics.add.group({
       defaultKey: 'projectile',
@@ -74,48 +73,73 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.canJump = true
     }
 
-    // Horizontal movement
-    const leftDown = this.cursors.left.isDown || this.wasd.left.isDown
-    const rightDown = this.cursors.right.isDown || this.wasd.right.isDown
-
-    if (leftDown) {
-      body.setVelocityX(-160)
-      this.setFlipX(true)
-      this.facingRight = false
-    } else if (rightDown) {
-      body.setVelocityX(160)
-      this.setFlipX(false)
-      this.facingRight = true
+    // ── Agachar (seta ↓) ─────────────────────────────────────────
+    const downDown = this.cursors.down.isDown
+    if (downDown && onGround) {
+      if (!this.isCrouching) {
+        this.isCrouching = true
+        body.setSize(28, 28)       // hitbox menor
+        body.setOffset(0, 16)
+        this.setScale(1, 0.65)
+      }
     } else {
-      body.setVelocityX(body.velocity.x * 0.75)
+      if (this.isCrouching) {
+        this.isCrouching = false
+        body.setSize(28, 44)
+        body.setOffset(0, 0)
+        this.setScale(1, 1)
+      }
     }
 
-    // Jump
-    const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
-      Phaser.Input.Keyboard.JustDown(this.wasd.up)
+    // ── Movimento horizontal (setas ← →) ─────────────────────────
+    const leftDown  = this.cursors.left.isDown
+    const rightDown = this.cursors.right.isDown
 
-    if (jumpPressed && (this.canJump || this.jumpCount < 1)) {
+    if (!this.isCrouching) {
+      if (leftDown) {
+        body.setVelocityX(-160)
+        this.setFlipX(true)
+        this.facingRight = false
+      } else if (rightDown) {
+        body.setVelocityX(160)
+        this.setFlipX(false)
+        this.facingRight = true
+      } else {
+        body.setVelocityX(body.velocity.x * 0.75)
+      }
+    } else {
+      // Agachado: movimento lento
+      body.setVelocityX(body.velocity.x * 0.5)
+    }
+
+    // ── Pular (SPACE) ─────────────────────────────────────────────
+    const jumpPressed = Phaser.Input.Keyboard.JustDown(this.keySpace)
+    if (jumpPressed && !this.isCrouching && (this.canJump || this.jumpCount < 1)) {
       body.setVelocityY(-480)
       this.jumpCount++
       this.canJump = false
     }
 
-    // Shoot (SPACE)
-    const shootPressed = Phaser.Input.Keyboard.JustDown(this.wasd.shoot)
+    // ── Arremessar artefato (V) ───────────────────────────────────
+    const shootPressed = Phaser.Input.Keyboard.JustDown(this.keyV)
     const now = this.scene.time.now
     if (shootPressed && now - this.lastShot > 400) {
       this.shoot()
       this.lastShot = now
     }
 
-    // Animate (simple color shift for walk frames)
-    if (!onGround) {
-      this.setTint(this.isHurt ? 0xff0000 : 0xddddff)
+    // ── Animação simples por cor ──────────────────────────────────
+    if (this.isHurt) {
+      this.setTint(0xff0000)
+    } else if (this.isCrouching) {
+      this.setTint(0xbbaa77)           // tom mais escuro agachado
+    } else if (!onGround) {
+      this.setTint(0xddddff)           // leve azul no ar
     } else if (leftDown || rightDown) {
       const frame = Math.floor(this.scene.time.now / 120) % 2
-      this.setTint(this.isHurt ? 0xff0000 : frame === 0 ? 0xffffff : 0xddcc99)
+      this.setTint(frame === 0 ? 0xffffff : 0xddcc99)  // pisca ao andar
     } else {
-      if (!this.isHurt) this.clearTint()
+      this.clearTint()
     }
   }
 
