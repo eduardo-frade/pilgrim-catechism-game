@@ -1,0 +1,38 @@
+{
+  "title": "O Peregrino do Catecismo — Narração Completa",
+  "voice": {
+    "model": "eleven_multilingual_v2",
+    "language": "pt",
+    "stability": 0.55,
+    "similarity_boost": 0.75,
+    "style": 0.30,
+    "use_speaker_boost": true,
+    "speed": 0.95
+  },
+  "chapters": [
+    { "id": "narr_01", "label": "Quiz Intro",        "text": "Atenção, peregrino! Responda a pergunta para continuar sua jornada." },
+    { "id": "narr_02", "label": "Acertou",            "text": "Muito bem! Você acertou! Continue sua jornada!" },
+    { "id": "narr_03", "label": "Errou 1",            "text": "Hmm, não foi dessa vez. Pense bem e tente de novo!" },
+    { "id": "narr_04", "label": "Errou 2",            "text": "Quase! Leia a pergunta com atenção e tente de novo!" },
+    { "id": "narr_05", "label": "Errou 3",            "text": "Não desanime! Deus nos ajuda a aprender. Tente mais uma vez!" },
+    { "id": "narr_06", "label": "Fase Completa",      "text": "Parabéns! Você completou a fase! Que Deus abençoe sua jornada!" },
+    { "id": "narr_07", "label": "Game Over",          "text": "Não desista, peregrino! Todo campeão já caiu e se levantou. Tente de novo!" },
+    { "id": "narr_08", "label": "Vida Extra",         "text": "Incrível! Você ganhou uma vida extra! Continue assim!" },
+    { "id": "narr_09", "label": "Pergunta 1",         "text": "Para que você foi criado? O fim principal do homem é glorificar a Deus e desfrutá-Lo para sempre!" },
+    { "id": "narr_10", "label": "Resposta 1",         "text": "A resposta certa é: Glorificar a Deus e desfrutá-Lo para sempre." },
+    { "id": "narr_11", "label": "Pergunta 2",         "text": "Como sabemos o que agrada a Deus? A Bíblia, a Palavra de Deus, nos ensina tudo o que precisamos!" },
+    { "id": "narr_12", "label": "Resposta 2",         "text": "A resposta certa é: A Palavra de Deus, contida nas Escrituras do Velho e do Novo Testamento." },
+    { "id": "narr_13", "label": "Pergunta 3",         "text": "O que é mais importante na Bíblia? Ela nos ensina o que crer sobre Deus e o que Deus nos pede para fazer!" },
+    { "id": "narr_14", "label": "Resposta 3",         "text": "A resposta certa é: O que o homem deve crer acerca de Deus e que obrigação Deus impõe ao homem." },
+    { "id": "narr_15", "label": "Pergunta 4",         "text": "Como é Deus? Deus é um Espírito perfeito e infinito — ele é santo, sábio, poderoso e cheio de amor!" },
+    { "id": "narr_16", "label": "Resposta 4",         "text": "A resposta certa é: Deus é um Espírito infinito, eterno e imutável em seu ser, sabedoria, poder, santidade, justiça, bondade e verdade." },
+    { "id": "narr_17", "label": "Pergunta 5",         "text": "Quantos Deuses existem? Existe apenas um Deus verdadeiro e vivo!" },
+    { "id": "narr_18", "label": "Resposta 5",         "text": "A resposta certa é: Há somente um Deus, vivo e verdadeiro." },
+    { "id": "narr_19", "label": "Pergunta 6",         "text": "Deus é um, mas em três pessoas! O Pai, o Filho e o Espírito Santo — os três são o mesmo Deus." },
+    { "id": "narr_20", "label": "Resposta 6",         "text": "A resposta certa é: Na Divindade há três pessoas: o Pai, o Filho e o Espírito Santo; e estas três são um único Deus." },
+    { "id": "narr_21", "label": "Pergunta 7",         "text": "O que é o plano de Deus? Deus planejou tudo o que acontece desde o começo do mundo!" },
+    { "id": "narr_22", "label": "Resposta 7",         "text": "A resposta certa é: Os decretos de Deus são o seu propósito eterno, pelo qual, para sua própria glória, ele predestinou tudo o que acontece." },
+    { "id": "narr_23", "label": "Pergunta 8",         "text": "Como Deus realiza o seu plano? Deus realiza tudo através da criação e do governo de todas as coisas!" },
+    { "id": "narr_24", "label": "Resposta 8",         "text": "A resposta certa é: Deus executa os seus decretos nas obras da criação e da providência." }
+  ]
+}
