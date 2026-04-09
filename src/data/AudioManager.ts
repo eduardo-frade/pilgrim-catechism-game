@@ -49,11 +49,11 @@ const FALLBACK_TEXTS: Record<string, string> = {
 }
 
 let _scene: Phaser.Scene | null = null
-let _useMP3 = false
+let _useMP3 = true
 
 export class AudioManager {
   /** Chamar no BootScene após carregar os assets */
-  static init(scene: Phaser.Scene, hasMP3Files = false) {
+  static init(scene: Phaser.Scene, hasMP3Files = true) {
     _scene   = scene
     _useMP3  = hasMP3Files
   }
@@ -95,7 +95,7 @@ export class AudioManager {
   /** Registra os arquivos MP3 no Phaser loader (chamar no preload do BootScene) */
   static preloadAudio(scene: Phaser.Scene) {
     Object.entries(AUDIO_KEYS).forEach(([, key]) => {
-      scene.load.audio(key, `assets/audio/${key}.mp3`)
+      scene.load.audio(key, `assets/audio/narr_audios/${key}.mp3`)
     })
   }
 }

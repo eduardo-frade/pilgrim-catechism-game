@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { AudioManager } from '../data/AudioManager'
 
 export class BootScene extends Phaser.Scene {
   constructor() { super({ key: 'BootScene' }) }
@@ -18,6 +19,9 @@ export class BootScene extends Phaser.Scene {
     }).setOrigin(0.5)
     void barBg
     this.load.on('progress', (v: number) => { barFill.width = 400 * v; pct.setText(Math.floor(v * 100) + '%') })
+
+    // Carrega os arquivos MP3 do ElevenLabs
+    AudioManager.preloadAudio(this)
   }
 
   create() {
@@ -27,6 +31,7 @@ export class BootScene extends Phaser.Scene {
     this.makeFragmentTexture()
     this.makeHeartTexture()
     this.makeProjectileTexture()
+    AudioManager.init(this)
     this.scene.start('MenuScene')
   }
 
