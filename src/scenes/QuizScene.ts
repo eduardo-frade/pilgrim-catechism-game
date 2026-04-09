@@ -204,7 +204,8 @@ export class QuizScene extends Phaser.Scene {
       this.time.delayedCall(1500, () => {
         this.scene.restart({
           phaseIndex: this.phaseIndex,
-          score: this.score
+          score: this.score,
+          lives: this.lives
         })
       })
     }

@@ -137,9 +137,16 @@ export class GameScene extends Phaser.Scene {
     this.player.update(time, delta)
     this.enemies.forEach(e => e.update())
 
-    // Caiu fora da tela
+    // Caiu fora da tela — toma dano e reaparece no início
     if (this.player.y > this.game.canvas.height + 60) {
+      const layout = PHASE_LAYOUTS[this.phaseIndex % PHASE_LAYOUTS.length]
       this.player.takeDamage()
+      if (this.player.getHearts() > 0) {
+        // Reaparece no começo da fase com um momento de invulnerabilidade
+        this.player.setPosition(layout.playerStart.x, layout.playerStart.y - 60)
+        const body = this.player.body as Phaser.Physics.Arcade.Body
+        body.setVelocity(0, 0)
+      }
     }
 
     // Chegou na zona de chegada
@@ -280,21 +287,24 @@ export class GameScene extends Phaser.Scene {
   private buildPlatforms(layout: typeof PHASE_LAYOUTS[0]) {
     this.platforms = this.physics.add.staticGroup()
     layout.platforms.forEach(([x, y, w, h]) => {
-      const g = this.add.graphics().setDepth(1)
-      g.fillStyle(0xc8a050, 1); g.fillRect(0, 0, w, h)
-      g.fillStyle(0x8b7355, 1); g.fillRect(0, 0, w, 8)
-      g.fillStyle(0x7a9c40, 1); g.fillRect(0, 0, w, 4)
-      for (let tx = 0; tx < w; tx += 16) {
-        g.fillStyle(0x6b8c30, 1)
-        g.fillTriangle(tx + 3, 0, tx + 7, -6, tx + 11, 0)
+      const key = `plat_${x}_${y}_${w}`
+      // Só gera a textura se ainda não existir (evita erro ao reiniciar fase)
+      if (!this.textures.exists(key)) {
+        const g = this.add.graphics()
+        g.fillStyle(0xc8a050, 1); g.fillRect(0, 0, w, h)
+        g.fillStyle(0x8b7355, 1); g.fillRect(0, 0, w, 8)
+        g.fillStyle(0x7a9c40, 1); g.fillRect(0, 0, w, 4)
+        for (let tx = 0; tx < w; tx += 16) {
+          g.fillStyle(0x6b8c30, 1)
+          g.fillTriangle(tx + 3, 0, tx + 7, -6, tx + 11, 0)
+        }
+        g.fillStyle(0xb09040, 0.4)
+        for (let tx = 10; tx < w; tx += 24) g.fillCircle(tx, h / 2 + 4, 3)
+        g.generateTexture(key, w, h + 8)
+        g.destroy()
       }
-      g.fillStyle(0xb09040, 0.4)
-      for (let tx = 10; tx < w; tx += 24) g.fillCircle(tx, h / 2 + 4, 3)
-      const texture = g.generateTexture(`plat_${x}_${y}`, w, h + 8)
-      g.destroy()
-      const block = this.platforms.create(x + w / 2, y + h / 2, `plat_${x}_${y}`) as Phaser.Physics.Arcade.Sprite
+      const block = this.platforms.create(x + w / 2, y + h / 2, key) as Phaser.Physics.Arcade.Sprite
       block.setDepth(2).refreshBody()
-      void texture
     })
   }
 
