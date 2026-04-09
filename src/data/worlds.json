@@ -1,0 +1,40 @@
+{
+  "worlds": [
+    {
+      "id": 1,
+      "name": "Mundo 1: Deus",
+      "theme": {
+        "primaryColor": "#f5c842",
+        "secondaryColor": "#e8a020",
+        "backgroundColor": "#fdf3c0",
+        "groundColor": "#c8a050",
+        "skyColor": "#fff8e1"
+      },
+      "enemy": {
+        "name": "Confusão",
+        "color": "#9b59b6",
+        "speed": 80
+      },
+      "pointItem": {
+        "name": "Fragmento de Luz",
+        "color": "#ffe066",
+        "points": 10
+      },
+      "lifeItem": {
+        "name": "Luz da Verdade",
+        "color": "#fff",
+        "bonusPoints": 100
+      },
+      "phases": [
+        { "id": 1, "catechismQuestion": 1, "title": "O Chamado" },
+        { "id": 2, "catechismQuestion": 2, "title": "A Bíblia" },
+        { "id": 3, "catechismQuestion": 3, "title": "O Ensinamento" },
+        { "id": 4, "catechismQuestion": 4, "title": "Quem é Deus?" },
+        { "id": 5, "catechismQuestion": 5, "title": "Um Só Deus" },
+        { "id": 6, "catechismQuestion": 6, "title": "A Trindade" },
+        { "id": 7, "catechismQuestion": 7, "title": "O Plano de Deus" },
+        { "id": 8, "catechismQuestion": 8, "title": "A Criação" }
+      ]
+    }
+  ]
+}

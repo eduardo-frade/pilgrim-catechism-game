@@ -1,0 +1,58 @@
+[
+  {
+    "number": 1,
+    "question": "Qual é o fim principal do homem?",
+    "simplified": "Para que você foi criado? O fim principal do homem é glorificar a Deus e desfrutá-Lo para sempre!",
+    "correct": "Glorificar a Deus e desfrutá-Lo para sempre",
+    "wrong": ["Ser feliz e fazer o que quiser", "Trabalhar muito e ficar rico"]
+  },
+  {
+    "number": 2,
+    "question": "Que regra Deus nos deu para mostrar como podemos glorificá-Lo e desfrutá-Lo?",
+    "simplified": "Como sabemos o que agrada a Deus? A Bíblia, a Palavra de Deus, nos ensina tudo o que precisamos!",
+    "correct": "A Palavra de Deus, contida nas Escrituras do Velho e do Novo Testamento",
+    "wrong": ["Nossas próprias ideias e sentimentos", "O que nossos pais e amigos nos ensinam"]
+  },
+  {
+    "number": 3,
+    "question": "O que as Escrituras ensinam principalmente?",
+    "simplified": "O que é mais importante na Bíblia? Ela nos ensina o que crer sobre Deus e o que Deus nos pede para fazer!",
+    "correct": "O que o homem deve crer acerca de Deus e que obrigação Deus impõe ao homem",
+    "wrong": ["Histórias interessantes e poesias bonitas", "Regras de como se comportar na escola"]
+  },
+  {
+    "number": 4,
+    "question": "O que é Deus?",
+    "simplified": "Como é Deus? Deus é um Espírito perfeito e infinito — ele é santo, sábio, poderoso e cheio de amor!",
+    "correct": "Deus é um Espírito infinito, eterno e imutável em seu ser, sabedoria, poder, santidade, justiça, bondade e verdade",
+    "wrong": ["Um homem muito velho que mora no céu", "Uma força que está em todas as coisas da natureza"]
+  },
+  {
+    "number": 5,
+    "question": "Há mais de um Deus?",
+    "simplified": "Quantos Deuses existem? Existe apenas um Deus verdadeiro e vivo!",
+    "correct": "Há somente um Deus, vivo e verdadeiro",
+    "wrong": ["Sim, há muitos deuses diferentes", "Não sabemos ao certo quantos deuses existem"]
+  },
+  {
+    "number": 6,
+    "question": "Quantas pessoas há na Divindade?",
+    "simplified": "Deus é um, mas em três pessoas! O Pai, o Filho e o Espírito Santo — os três são o mesmo Deus.",
+    "correct": "Na Divindade há três pessoas: o Pai, o Filho e o Espírito Santo; e estas três são um único Deus",
+    "wrong": ["Há uma única pessoa: Deus Pai somente", "Há três deuses separados e diferentes"]
+  },
+  {
+    "number": 7,
+    "question": "O que são os decretos de Deus?",
+    "simplified": "O que é o plano de Deus? Deus planejou tudo o que acontece desde o começo do mundo!",
+    "correct": "Os decretos de Deus são o seu propósito eterno, conforme o conselho de sua vontade, pelo qual, para sua própria glória, ele predestinou tudo o que acontece",
+    "wrong": ["As leis que Deus escreveu na Bíblia para seguirmos", "As orações que as pessoas fazem a Deus todo dia"]
+  },
+  {
+    "number": 8,
+    "question": "Como Deus executa os seus decretos?",
+    "simplified": "Como Deus realiza o seu plano? Deus realiza tudo através da criação e do governo de todas as coisas!",
+    "correct": "Deus executa os seus decretos nas obras da criação e da providência",
+    "wrong": ["Deus pede ajuda aos anjos para fazer tudo acontecer", "Deus espera que as pessoas façam as coisas por ele"]
+  }
+]
