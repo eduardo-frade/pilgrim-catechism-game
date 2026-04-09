@@ -1,9 +1,9 @@
 import Phaser from 'phaser'
 
-// ─── Constantes de física (Mario-like) ────────────────────────────────────────
-const MOVE_SPEED   = 220    // velocidade horizontal
-const JUMP_FORCE   = -800   // força do pulo (negativa = para cima)
-const SHOOT_COOLDOWN = 350  // ms entre arremessos
+const MOVE_SPEED    = 220
+const JUMP_FORCE    = -800
+const SHOOT_COOLDOWN = 350
+const PLAYER_SCALE  = 0.38   // 128px → ~48px display
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
@@ -11,33 +11,34 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private keySpace!: Phaser.Input.Keyboard.Key
   private projectiles!: Phaser.Physics.Arcade.Group
 
-  private canJump    = false
-  private jumpCount  = 0
-  private lastShot   = 0
-  private isHurt     = false
+  private canJump     = false
+  private jumpCount   = 0
+  private lastShot    = 0
+  private isHurt      = false
   private isCrouching = false
+  private isShooting  = false
   private facingRight = true
 
-  // Sistema de corações
   private hearts = 3
   private onHeartChangeCallback?: (h: number) => void
   private onDeathCallback?: () => void
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'player')
+    super(scene, x, y, 'stop')
     scene.add.existing(this)
     scene.physics.add.existing(this)
 
     const body = this.body as Phaser.Physics.Arcade.Body
-    body.setSize(24, 44)
+    body.setSize(28, 46)
     body.setMaxVelocityX(300)
+    this.setScale(PLAYER_SCALE)
     this.setDepth(5)
 
     this.cursors  = scene.input.keyboard!.createCursorKeys()
     this.keySpace = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
     this.keyV     = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.V)
 
-    this.projectiles = scene.physics.add.group({ defaultKey: 'projectile', maxSize: 10 })
+    this.projectiles = scene.physics.add.group({ defaultKey: 'throwing_light', maxSize: 10 })
   }
 
   getProjectiles()  { return this.projectiles }
@@ -51,7 +52,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.hearts = Math.max(0, this.hearts - 1)
     this.onHeartChangeCallback?.(this.hearts)
 
-    this.setTint(0xff0000)
     const body = this.body as Phaser.Physics.Arcade.Body
     body.setVelocityY(-300)
     body.setVelocityX(this.facingRight ? -200 : 200)
@@ -59,7 +59,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.hearts <= 0) {
       this.scene.time.delayedCall(600, () => this.onDeathCallback?.())
     } else {
-      this.scene.time.delayedCall(150, () => this.clearTint())
       this.scene.time.delayedCall(900, () => { this.isHurt = false })
     }
   }
@@ -86,14 +85,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (downDown && onGround) {
       if (!this.isCrouching) {
         this.isCrouching = true
-        body.setSize(24, 28); body.setOffset(0, 16)
-        this.setScale(1, 0.65)
+        body.setSize(28, 28); body.setOffset(0, 18)
+        this.setScale(PLAYER_SCALE, PLAYER_SCALE * 0.65)
       }
       body.setVelocityX(body.velocity.x * 0.6)
     } else if (this.isCrouching) {
       this.isCrouching = false
-      body.setSize(24, 44); body.setOffset(0, 0)
-      this.setScale(1, 1)
+      body.setSize(28, 46); body.setOffset(0, 0)
+      this.setScale(PLAYER_SCALE)
     }
 
     // ── Mover ← → ──────────────────────────────────────────────────
@@ -108,7 +107,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         body.setVelocityX(MOVE_SPEED)
         this.setFlipX(false); this.facingRight = true
       } else {
-        // Fricção rápida estilo Mario
         body.setVelocityX(body.velocity.x * 0.65)
       }
     }
@@ -121,7 +119,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.canJump = false
     }
 
-    // ── Pulo variável: soltar cedo = pulo baixo (como Mario) ────────
+    // ── Pulo variável (soltar cedo = pulo mais baixo) ───────────────
     if (!this.keySpace.isDown && body.velocity.y < -200) {
       body.setVelocityY(body.velocity.y + 60)
     }
@@ -134,34 +132,44 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    // ── Animação visual ─────────────────────────────────────────────
+    // ── Troca de sprite por estado ─────────────────────────────────
+    this.updateSprite(onGround, leftDown, rightDown)
+  }
+
+  private updateSprite(onGround: boolean, leftDown: boolean, rightDown: boolean) {
     if (this.isHurt) {
-      this.setTint(0xff4444)
+      this.setTexture('hurt')
+    } else if (this.isShooting) {
+      this.setTexture('power')
     } else if (this.isCrouching) {
-      this.setTint(0xbbaa77)
+      this.setTexture('down')
     } else if (!onGround) {
-      this.clearTint()
+      this.setTexture('jump')
     } else if (leftDown || rightDown) {
-      // pisca ao andar
-      const f = Math.floor(this.scene.time.now / 100) % 2
-      this.setTint(f === 0 ? 0xffffff : 0xeedd99)
+      const frame = Math.floor(this.scene.time.now / 120) % 2
+      this.setTexture(frame === 0 ? 'walk_1' : 'walk_2')
     } else {
-      this.clearTint()
+      this.setTexture('stop')
     }
   }
 
   private shoot() {
+    this.isShooting = true
+    this.scene.time.delayedCall(220, () => { this.isShooting = false })
+
     const proj = this.projectiles.get() as Phaser.Physics.Arcade.Sprite
     if (!proj) return
     proj.setActive(true).setVisible(true)
-    proj.setPosition(this.x + (this.facingRight ? 22 : -22), this.y - 8)
-    proj.setTint(0xfff176).setDepth(4)
+    proj.setPosition(this.x + (this.facingRight ? 20 : -20), this.y - 12)
+    proj.setScale(0.22).setDepth(4).setAngle(0)
     const b = proj.body as Phaser.Physics.Arcade.Body
-    b.setAllowGravity(false)
-    b.setVelocityX(this.facingRight ? 500 : -500)
-    b.setVelocityY(0)
-    this.scene.time.delayedCall(1200, () => {
-      if (proj.active) { proj.setActive(false).setVisible(false) }
+    // Arco de lançamento: gravidade ativa + velocidade inicial inclinada (como uma pedra)
+    b.setAllowGravity(true)
+    b.setVelocityX(this.facingRight ? 380 : -380)
+    b.setVelocityY(-380)   // lança em arco para cima
+    // Expira após 1.8s caso não bata em nada
+    this.scene.time.delayedCall(1800, () => {
+      if (proj.active) proj.setActive(false).setVisible(false)
     })
   }
 

@@ -6,7 +6,7 @@ export class Collectible extends Phaser.Physics.Arcade.Sprite {
   readonly collectibleType: CollectibleType
 
   constructor(scene: Phaser.Scene, x: number, y: number, type: CollectibleType) {
-    super(scene, x, y, type === 'point' ? 'fragment' : 'life_item')
+    super(scene, x, y, type === 'point' ? 'light' : 'heart')
     this.collectibleType = type
 
     scene.add.existing(this)
@@ -16,12 +16,7 @@ export class Collectible extends Phaser.Physics.Arcade.Sprite {
     body.setAllowGravity(false)
     body.setImmovable(true)
     this.setDepth(3)
-
-    if (type === 'point') {
-      this.setTint(0xffe066)
-    } else {
-      this.setTint(0xffffff)
-    }
+    this.setScale(type === 'point' ? 0.2 : 0.24)
 
     // Floating animation
     scene.tweens.add({

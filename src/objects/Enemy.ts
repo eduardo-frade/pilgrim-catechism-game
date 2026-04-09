@@ -14,12 +14,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.patrolLeft  = patrolLeft
     this.patrolRight = patrolRight
     this.speed       = speed
+    this.setScale(0.35)   // 128px → ~45px display
     this.setDepth(4)
 
     const body = this.body as Phaser.Physics.Arcade.Body
-    body.setSize(30, 30)
-    body.setOffset(3, 3)
-    // Não flutua — usa a gravidade global (1400)
+    body.setSize(38, 42)
+    body.setOffset(45, 42)
     body.setVelocityX(this.speed)
   }
 

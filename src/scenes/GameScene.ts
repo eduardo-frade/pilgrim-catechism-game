@@ -235,24 +235,26 @@ export class GameScene extends Phaser.Scene {
   private enemies:      Enemy[]       = []
   private collectibles: Collectible[] = []
 
-  private phaseIndex     = 0
-  private score          = 0
-  private lives          = 1
-  private scoreAtLastLife = 0
-  private world          = worlds.worlds[0]
-  private levelWidth     = 0
-  private phaseEnded     = false
+  private phaseIndex      = 0
+  private score           = 0
+  private lives           = 1
+  private scoreAtLastLife  = 0
+  private scoreAtPhaseStart = 0   // score ao entrar na fase — restaurado ao morrer
+  private world           = worlds.worlds[0]
+  private levelWidth      = 0
+  private phaseEnded      = false
 
   constructor() { super({ key: 'GameScene' }) }
 
   init(data: GameData) {
-    this.phaseIndex      = data.phaseIndex ?? 0
-    this.score           = data.score  ?? 0
-    this.lives           = data.lives  ?? StorageManager.load().lives
-    this.scoreAtLastLife = this.score
-    this.enemies         = []
-    this.collectibles    = []
-    this.phaseEnded      = false
+    this.phaseIndex       = data.phaseIndex ?? 0
+    this.score            = data.score  ?? 0
+    this.scoreAtPhaseStart = this.score
+    this.lives            = data.lives  ?? StorageManager.load().lives
+    this.scoreAtLastLife  = this.score
+    this.enemies          = []
+    this.collectibles     = []
+    this.phaseEnded       = false
   }
 
   create() {
@@ -358,6 +360,7 @@ export class GameScene extends Phaser.Scene {
       }).setOrigin(0.5).setScrollFactor(0).setDepth(26)
       this.time.delayedCall(2500, () => { this.scene.stop('HUDScene'); this.scene.start('MenuScene') })
     } else {
+      // Perde vida → reinicia a fase do zero (inimigos, coletáveis e score resetados)
       this.add.text(width / 2, height / 2 - 20, 'Não desista!', {
         fontSize: '24px', color: '#f5c842', fontStyle: 'bold', fontFamily: 'Arial'
       }).setOrigin(0.5).setScrollFactor(0).setDepth(26)
@@ -366,7 +369,8 @@ export class GameScene extends Phaser.Scene {
       }).setOrigin(0.5).setScrollFactor(0).setDepth(26)
       this.time.delayedCall(2000, () => {
         this.scene.stop('HUDScene')
-        this.scene.start('QuizScene', { phaseIndex: this.phaseIndex, score: this.score, lives: this.lives })
+        // Reinicia a fase — pontos da tentativa perdida são descartados
+        this.scene.restart({ phaseIndex: this.phaseIndex, score: this.scoreAtPhaseStart, lives: this.lives })
       })
     }
   }
@@ -389,79 +393,26 @@ export class GameScene extends Phaser.Scene {
   // ════════════════════════════════════════════════════════════════════════════
 
   private drawBackground() {
-    const { height } = this.cameras.main
+    const { width: vw, height: vh } = this.cameras.main
     const W = this.levelWidth
 
-    // Céu quente/dourado (paralaxe)
-    const sky = this.add.graphics().setScrollFactor(0).setDepth(-10)
-    sky.fillGradientStyle(0xfff8e1, 0xfff8e1, 0xf5d060, 0xf5d060, 1)
-    sky.fillRect(0, 0, this.game.canvas.width, height)
+    // Paisagem como fundo fixo (imagem real)
+    const bg = this.add.image(vw / 2, vh / 2, 'landscape')
+    bg.setDisplaySize(vw, vh).setScrollFactor(0).setDepth(-10)
 
-    // Colinas distantes (paralaxe lenta)
-    const hills = this.add.graphics().setScrollFactor(0.2).setDepth(-9)
-    hills.fillStyle(0xe8d090, 0.55)
-    hills.fillEllipse(300,  height - 60, 700, 260)
-    hills.fillEllipse(900,  height - 40, 600, 220)
-    hills.fillEllipse(1500, height - 70, 700, 240)
-    hills.fillStyle(0xd4b870, 0.45)
-    hills.fillEllipse(600,  height - 30, 500, 200)
-    hills.fillEllipse(1200, height - 50, 500, 210)
-
-    // Árvores no fundo (paralaxe média)
-    const treesG = this.add.graphics().setScrollFactor(0.4).setDepth(-8)
-    for (let tx = 80; tx < W; tx += 260) {
-      this.drawBgTree(treesG, tx, height - 70, 0.7 + Math.random() * 0.5)
-    }
-
-    // Chão base (solo dourado)
+    // Chão base
     const ground = this.add.graphics().setDepth(-7)
     ground.fillStyle(0xc8a050, 1)
-    ground.fillRect(0, height - 32, W, 32)
+    ground.fillRect(0, vh - 32, W, 32)
     ground.fillStyle(0x7a9c40, 1)
-    ground.fillRect(0, height - 32, W, 5)
-  }
-
-  private drawBgTree(g: Phaser.GameObjects.Graphics, x: number, y: number, s: number) {
-    g.fillStyle(0x7a5530, 1); g.fillRect(x - 4 * s, y, 8 * s, 30 * s)
-    g.fillStyle(0x5a7a2c, 0.8); g.fillCircle(x, y - 18 * s, 22 * s)
-    g.fillStyle(0x6a9034, 0.6); g.fillCircle(x - 12 * s, y - 8 * s, 15 * s)
-    g.fillCircle(x + 12 * s, y - 10 * s, 15 * s)
+    ground.fillRect(0, vh - 32, W, 5)
   }
 
   private buildPlatforms(layout: typeof PHASE_LAYOUTS[0]) {
     this.platforms = this.physics.add.staticGroup()
-
     layout.platforms.forEach(([x, y, w, h]) => {
-      const key = `plt_${w}_${h}`
-
-      if (!this.textures.exists(key)) {
-        const g = this.add.graphics()
-
-        // Terra (base marrom)
-        g.fillStyle(0xb08040, 1); g.fillRect(0, 4, w, h)
-
-        // Grama no topo
-        g.fillStyle(0x7ab030, 1); g.fillRect(0, 0, w, 6)
-        g.fillStyle(0x5a8a20, 1); g.fillRect(0, 0, w, 2)
-
-        // Tufos de grama
-        for (let tx = 6; tx < w - 6; tx += 14) {
-          g.fillStyle(0x6aaa28, 1)
-          g.fillTriangle(tx, 0, tx + 4, -5, tx + 8, 0)
-        }
-
-        // Textura da terra
-        g.fillStyle(0xa07030, 0.5)
-        for (let tx = 12; tx < w - 6; tx += 22) {
-          g.fillCircle(tx, h / 2 + 4, 3)
-        }
-
-        g.generateTexture(key, w, h)
-        g.destroy()
-      }
-
-      const block = this.platforms.create(x + w / 2, y + h / 2, key) as Phaser.Physics.Arcade.Sprite
-      block.setDepth(2).refreshBody()
+      const block = this.platforms.create(x + w / 2, y + h / 2, 'platform_tile') as Phaser.Physics.Arcade.Sprite
+      block.setDisplaySize(w, h).setDepth(2).refreshBody()
     })
   }
 
@@ -516,7 +467,9 @@ export class GameScene extends Phaser.Scene {
 
   private spawnEnemies(layout: typeof PHASE_LAYOUTS[0]) {
     const groundY = this.game.canvas.height - 48
+    const safeZoneEnd = layout.playerStart.x + 220  // inimigos não nascem perto do jogador
     layout.enemies.forEach(e => {
+      if (e.x < safeZoneEnd) return
       const enemy = new Enemy(this, e.x, groundY, e.patrol[0], e.patrol[1], this.world.enemy.speed)
       this.enemies.push(enemy)
     })
@@ -536,6 +489,15 @@ export class GameScene extends Phaser.Scene {
 
   private setupCollisions() {
     this.physics.add.collider(this.player, this.platforms)
+
+    // ── Projétil para na plataforma (não atravessa) ───────────────────
+    this.physics.add.collider(
+      this.player.getProjectiles(), this.platforms,
+      (proj) => {
+        const p = proj as Phaser.Physics.Arcade.Sprite
+        if (p.active) p.setActive(false).setVisible(false)
+      }
+    )
 
     // ── Goal — overlap com sprite estático ────────────────────────────
     this.physics.add.overlap(this.player, this.goalSprite, () => {
