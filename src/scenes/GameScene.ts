@@ -77,6 +77,8 @@ const PHASE_LAYOUTS = [
 
 export class GameScene extends Phaser.Scene {
   private player!: Player
+  // Exposto para o HUDScene controlar via toque
+  get playerRef() { return this.player }
   private platforms!: Phaser.Physics.Arcade.StaticGroup
   private goalSprite!: Phaser.Physics.Arcade.Sprite
   private enemies:      Enemy[]       = []
