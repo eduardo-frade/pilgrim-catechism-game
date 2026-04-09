@@ -17,7 +17,7 @@ interface GameData {
 // Goal: posição da bandeira
 // playerStart: onde o player começa
 const PHASE_LAYOUTS = [
-  { // Fase 1 — introdução (~2000px)
+  { // Fase 1 — introdução (~2000px) — 6 inimigos
     platforms: [
       [0,418,280,30],[200,340,100,16],[360,275,100,16],[520,215,120,16],
       [700,275,100,16],[860,340,100,16],[1000,418,240,30],
@@ -25,8 +25,12 @@ const PHASE_LAYOUTS = [
       [1530,300,100,16],[1690,370,100,16],[1830,418,270,30]
     ],
     enemies: [
-      {x:260, patrol:[210,350]},{x:760, patrol:[710,850]},
-      {x:1260, patrol:[1220,1360]}
+      {x:100, patrol:[10,270]},
+      {x:400, patrol:[365,450]},
+      {x:750, patrol:[705,790]},
+      {x:1100, patrol:[1005,1230]},
+      {x:1430, patrol:[1375,1480]},
+      {x:1900, patrol:[1835,2090]}
     ],
     collectibles: [
       {x:240,y:305,type:'point'},{x:570,y:180,type:'point'},
@@ -35,15 +39,20 @@ const PHASE_LAYOUTS = [
     goal:        {x:1960, y:378},
     playerStart: {x:60,  y:375}
   },
-  { // Fase 2 — lacunas no chão (~2200px)
+  { // Fase 2 — lacunas no chão (~2200px) — 7 inimigos
     platforms: [
       [0,418,200,30],[290,418,220,30],[540,360,100,16],[700,418,200,30],
       [990,360,100,16],[1150,418,220,30],[1430,320,100,16],[1610,260,100,16],
       [1800,418,270,30],[1850,340,100,16]
     ],
     enemies: [
-      {x:350, patrol:[300,490]},{x:760, patrol:[710,880]},
-      {x:1210, patrol:[1160,1410]},{x:1870, patrol:[1860,1940]}
+      {x:80,  patrol:[10,190]},
+      {x:380, patrol:[295,500]},
+      {x:590, patrol:[545,635]},
+      {x:780, patrol:[705,890]},
+      {x:1250, patrol:[1155,1360]},
+      {x:1480, patrol:[1435,1525]},
+      {x:1900, patrol:[1805,2060]}
     ],
     collectibles: [
       {x:350,y:380,type:'point'},{x:590,y:325,type:'point'},
@@ -52,7 +61,7 @@ const PHASE_LAYOUTS = [
     goal:        {x:1960, y:378},
     playerStart: {x:60,  y:375}
   },
-  { // Fase 3 — escadaria dupla (~2400px)
+  { // Fase 3 — escadaria dupla (~2400px) — 7 inimigos
     platforms: [
       [0,418,180,30],[200,370,100,16],[360,320,100,16],[520,270,100,16],[680,220,110,16],
       [870,418,200,30],
@@ -60,8 +69,13 @@ const PHASE_LAYOUTS = [
       [1580,270,100,16],[1740,320,100,16],[1900,418,250,30]
     ],
     enemies: [
-      {x:250, patrol:[210,350]},{x:730, patrol:[690,860]},
-      {x:1130, patrol:[1090,1230]},{x:1630, patrol:[1590,1730]}
+      {x:80,  patrol:[10,170]},
+      {x:250, patrol:[205,295]},
+      {x:570, patrol:[525,615]},
+      {x:730, patrol:[685,785]},
+      {x:970, patrol:[875,1060]},
+      {x:1290, patrol:[1245,1335]},
+      {x:1980, patrol:[1905,2140]}
     ],
     collectibles: [
       {x:250,y:335,type:'point'},{x:730,y:185,type:'point'},
@@ -70,7 +84,7 @@ const PHASE_LAYOUTS = [
     goal:        {x:2020, y:378},
     playerStart: {x:60,  y:375}
   },
-  { // Fase 4 — zigue-zague duplo (~2400px)
+  { // Fase 4 — zigue-zague duplo (~2400px) — 8 inimigos
     platforms: [
       [0,418,160,30],
       [200,355,80,16],[340,295,80,16],[480,355,80,16],[620,295,80,16],[760,355,80,16],
@@ -79,9 +93,14 @@ const PHASE_LAYOUTS = [
       [1660,418,200,30],[1720,295,80,16],[1860,355,80,16],[2000,418,220,30]
     ],
     enemies: [
-      {x:250, patrol:[210,370]},{x:670, patrol:[630,750]},
-      {x:1010, patrol:[970,1090]},{x:1430, patrol:[1390,1510]},
-      {x:1760, patrol:[1730,1850]}
+      {x:80,  patrol:[10,150]},
+      {x:230, patrol:[205,275]},
+      {x:510, patrol:[485,555]},
+      {x:790, patrol:[765,835]},
+      {x:980, patrol:[905,1090]},
+      {x:1130, patrol:[1105,1175]},
+      {x:1410, patrol:[1385,1455]},
+      {x:1750, patrol:[1725,1795]}
     ],
     collectibles: [
       {x:245,y:320,type:'point'},{x:665,y:260,type:'point'},
@@ -90,7 +109,7 @@ const PHASE_LAYOUTS = [
     goal:        {x:2090, y:378},
     playerStart: {x:60,  y:375}
   },
-  { // Fase 5 — saltos longos duplos (~2500px)
+  { // Fase 5 — saltos longos duplos (~2500px) — 8 inimigos
     platforms: [
       [0,418,140,30],
       [220,340,90,16],[400,270,90,16],[580,340,90,16],[760,270,90,16],
@@ -99,9 +118,14 @@ const PHASE_LAYOUTS = [
       [1730,340,90,16],[1920,418,250,30],[1980,270,90,16]
     ],
     enemies: [
-      {x:270, patrol:[230,390]},{x:820, patrol:[770,940]},
-      {x:1060, patrol:[1020,1180]},{x:1420, patrol:[1380,1540]},
-      {x:2010, patrol:[1990,2060]}
+      {x:60,  patrol:[10,130]},
+      {x:260, patrol:[225,305]},
+      {x:620, patrol:[585,665]},
+      {x:800, patrol:[765,845]},
+      {x:1050, patrol:[965,1150]},
+      {x:1230, patrol:[1195,1275]},
+      {x:1590, patrol:[1555,1635]},
+      {x:2020, patrol:[1925,2160]}
     ],
     collectibles: [
       {x:270,y:305,type:'point'},{x:820,y:235,type:'point'},
@@ -110,7 +134,7 @@ const PHASE_LAYOUTS = [
     goal:        {x:2090, y:378},
     playerStart: {x:60,  y:375}
   },
-  { // Fase 6 — três andares duplos (~2700px)
+  { // Fase 6 — três andares duplos (~2700px) — 9 inimigos
     platforms: [
       [0,418,120,30],
       [160,355,90,16],[320,290,90,16],[480,225,100,16],[640,290,90,16],[800,355,90,16],
@@ -119,9 +143,15 @@ const PHASE_LAYOUTS = [
       [1860,418,200,30],[1920,290,90,16],[2080,225,100,16],[2240,418,230,30]
     ],
     enemies: [
-      {x:210, patrol:[170,310]},{x:530, patrol:[490,630]},{x:850, patrol:[810,970]},
-      {x:1250, patrol:[1210,1350]},{x:1570, patrol:[1530,1670]},
-      {x:1970, patrol:[1930,2070]}
+      {x:50,  patrol:[10,110]},
+      {x:200, patrol:[165,245]},
+      {x:530, patrol:[485,575]},
+      {x:840, patrol:[805,885]},
+      {x:1080, patrol:[985,1170]},
+      {x:1250, patrol:[1205,1285]},
+      {x:1560, patrol:[1525,1605]},
+      {x:1970, patrol:[1925,2005]},
+      {x:2340, patrol:[2245,2460]}
     ],
     collectibles: [
       {x:210,y:320,type:'point'},{x:530,y:190,type:'point'},
@@ -130,7 +160,7 @@ const PHASE_LAYOUTS = [
     goal:        {x:2360, y:378},
     playerStart: {x:50,  y:375}
   },
-  { // Fase 7 — degraus finos duplos (~2800px)
+  { // Fase 7 — degraus finos duplos (~2800px) — 10 inimigos
     platforms: [
       [0,418,100,30],
       [150,380,65,16],[280,340,65,16],[410,300,65,16],[540,260,65,16],
@@ -142,8 +172,16 @@ const PHASE_LAYOUTS = [
       [2400,418,220,30]
     ],
     enemies: [
-      {x:195, patrol:[160,265]},{x:455, patrol:[420,530]},{x:865, patrol:[810,920]},
-      {x:1125, patrol:[1090,1200]},{x:1385, patrol:[1350,1460]},{x:1645, patrol:[1610,1720]}
+      {x:55,  patrol:[10,90]},
+      {x:170, patrol:[155,210]},
+      {x:425, patrol:[415,470]},
+      {x:685, patrol:[675,730]},
+      {x:960, patrol:[935,990]},
+      {x:1125, patrol:[1085,1140]},
+      {x:1355, patrol:[1345,1400]},
+      {x:1615, patrol:[1605,1660]},
+      {x:2060, patrol:[1965,2155]},
+      {x:2460, patrol:[2405,2610]}
     ],
     collectibles: [
       {x:195,y:345,type:'point'},{x:540,y:225,type:'point'},
@@ -152,7 +190,7 @@ const PHASE_LAYOUTS = [
     goal:        {x:2500, y:378},
     playerStart: {x:40,  y:375}
   },
-  { // Fase 8 — desafio final (~3000px)
+  { // Fase 8 — desafio final (~3000px) — 12 inimigos
     platforms: [
       [0,418,100,30],
       [140,370,60,16],[270,315,60,16],[400,260,60,16],[530,205,60,16],
@@ -165,9 +203,18 @@ const PHASE_LAYOUTS = [
       [2600,260,60,16],[2730,418,220,30]
     ],
     enemies: [
-      {x:180, patrol:[150,260]},{x:440, patrol:[410,520]},{x:710, patrol:[670,780]},
-      {x:1160, patrol:[1120,1230]},{x:1420, patrol:[1380,1490]},{x:1690, patrol:[1640,1750]},
-      {x:2130, patrol:[2090,2200]},{x:2390, patrol:[2350,2460]}
+      {x:55,  patrol:[10,90]},
+      {x:160, patrol:[145,195]},
+      {x:415, patrol:[405,455]},
+      {x:545, patrol:[535,585]},
+      {x:800, patrol:[795,845]},
+      {x:935, patrol:[925,975]},
+      {x:1140, patrol:[1115,1165]},
+      {x:1385, patrol:[1375,1425]},
+      {x:1515, patrol:[1505,1555]},
+      {x:1645, patrol:[1635,1685]},
+      {x:2100, patrol:[2035,2225]},
+      {x:2790, patrol:[2735,2940]}
     ],
     collectibles: [
       {x:180,y:335,type:'point'},{x:530,y:170,type:'point'},
