@@ -3,7 +3,7 @@ import Phaser from 'phaser'
 const MOVE_SPEED    = 220
 const JUMP_FORCE    = -800
 const SHOOT_COOLDOWN = 350
-const PLAYER_SCALE  = 0.38   // 128px → ~48px display
+const PLAYER_SCALE  = 0.58   // 128px → ~74px display
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
@@ -33,7 +33,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(5)
 
     const body = this.body as Phaser.Physics.Arcade.Body
-    body.setSize(28, 46)   // agora displayWidth = 48.6px → auto-centra corretamente
+    body.setSize(42, 70)   // agora displayWidth = 74px → auto-centra corretamente
     body.setMaxVelocityX(300)
 
     this.cursors  = scene.input.keyboard!.createCursorKeys()
@@ -88,13 +88,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (!this.isCrouching) {
         this.isCrouching = true
         this.setScale(PLAYER_SCALE, PLAYER_SCALE * 0.65)  // escala antes do setSize
-        body.setSize(24, 28)   // auto-centra no display escalonado
+        body.setSize(36, 42)   // auto-centra no display escalonado
       }
       body.setVelocityX(body.velocity.x * 0.6)
     } else if (this.isCrouching) {
       this.isCrouching = false
       this.setScale(PLAYER_SCALE)    // restaura escala antes do setSize
-      body.setSize(28, 46)            // auto-centra no display normal
+      body.setSize(42, 70)            // auto-centra no display normal
     }
 
     // ── Mover ← → ──────────────────────────────────────────────────

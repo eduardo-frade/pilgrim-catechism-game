@@ -14,12 +14,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.patrolLeft  = patrolLeft
     this.patrolRight = patrolRight
     this.speed       = speed
-    this.setScale(0.35)   // 128px → ~45px display
+    this.setScale(0.50)   // 128px → ~64px display
     this.setDepth(4)
 
     const body = this.body as Phaser.Physics.Arcade.Body
     // body.setSize com center=true (padrão) centraliza automaticamente no sprite
-    body.setSize(36, 40)
+    body.setSize(52, 56)
     body.setVelocityX(this.speed)
   }
 

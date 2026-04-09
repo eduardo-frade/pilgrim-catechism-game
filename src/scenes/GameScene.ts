@@ -396,23 +396,32 @@ export class GameScene extends Phaser.Scene {
     const { width: vw, height: vh } = this.cameras.main
     const W = this.levelWidth
 
-    // Paisagem como fundo fixo (imagem real)
-    const bg = this.add.image(vw / 2, vh / 2, 'landscape')
-    bg.setDisplaySize(vw, vh).setScrollFactor(0).setDepth(-10)
+    // Background landscape (fixed, covers viewport)
+    this.add.image(vw / 2, vh / 2, 'landscape')
+      .setDisplaySize(vw, vh).setScrollFactor(0).setDepth(-10)
 
-    // Chão base
-    const ground = this.add.graphics().setDepth(-7)
-    ground.fillStyle(0xc8a050, 1)
-    ground.fillRect(0, vh - 32, W, 32)
-    ground.fillStyle(0x7a9c40, 1)
-    ground.fillRect(0, vh - 32, W, 5)
+    // Dark earth strip spanning full level width (below the landscape ground line)
+    this.add.graphics().setDepth(-7)
+      .fillStyle(0x5c3a1e, 1)
+      .fillRect(0, vh - 32, W, 32)
   }
 
   private buildPlatforms(layout: typeof PHASE_LAYOUTS[0]) {
     this.platforms = this.physics.add.staticGroup()
+    const vh = this.game.canvas.height
+
     layout.platforms.forEach(([x, y, w, h]) => {
+      // Invisible physics body at exact layout dimensions
       const block = this.platforms.create(x + w / 2, y + h / 2, 'platform_tile') as Phaser.Physics.Arcade.Sprite
-      block.setDisplaySize(w, h).setDepth(2).refreshBody()
+      block.setDisplaySize(w, h).setAlpha(0).refreshBody()
+
+      const isGround = y + h >= vh - 10   // ground-level platforms: landscape handles visual
+      if (!isGround) {
+        // Floating platform visual: oval island at natural proportions, hangs below physics top
+        const visualH = Math.min(Math.round(w * 0.55), 60)
+        this.add.image(x + w / 2, y + visualH / 2, 'platform_tile')
+          .setDisplaySize(w, visualH).setDepth(2)
+      }
     })
   }
 
@@ -477,7 +486,7 @@ export class GameScene extends Phaser.Scene {
       for (const [px, py, pw] of layout.platforms) {
         if (e.x >= px && e.x <= px + pw && py > bestPlatformTop) {
           bestPlatformTop = py
-          spawnY = py - 22   // center just above platform top (enemy half-height ≈ 22px)
+          spawnY = py - 32   // center just above platform top (enemy half-height ≈ 32px)
         }
       }
 
