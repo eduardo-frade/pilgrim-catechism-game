@@ -165,12 +165,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     proj.setTexture('power')
     proj.setFlipX(!this.facingRight)
     proj.setPosition(this.x + (this.facingRight ? 28 : -28), this.y - 18)
-    proj.setScale(0.30).setDepth(4).setAngle(0)
+    proj.setScale(0.60).setDepth(4).setAngle(0)
     const b = proj.body as Phaser.Physics.Arcade.Body
     b.setAllowGravity(true)
     b.setVelocityX(this.facingRight ? 360 : -360)
-    b.setVelocityY(-260)   // arco de pedra (mais baixo que antes)
-    this.scene.time.delayedCall(1800, () => {
+    b.setVelocityY(-260)   // arco de pedra
+    this.scene.time.delayedCall(4000, () => {
       if (proj.active) proj.setActive(false).setVisible(false)
     })
   }
