@@ -39,8 +39,10 @@ export class BootScene extends Phaser.Scene {
     this.load.image('landscape2',     'assets/sprites/landscape2.png')  // fundo maior (opcional)
     this.load.image('platform_tile',  'assets/sprites/platform.png')
     this.load.image('hole',           'assets/sprites/hole.png')         // marcador de buraco (opcional)
-    this.load.image('main_title',     'assets/sprites/main_title.png')
-    this.load.image('question_bg',    'assets/sprites/question.png')
+    this.load.image('main_title',          'assets/sprites/main_title.png')
+    this.load.image('question_bg',         'assets/sprites/question.png')
+    this.load.image('tela_inicial',        'assets/sprites/tela_inicial.png')        // tela de menu (opcional)
+    this.load.image('botao_iniciar',       'assets/sprites/botao_iniciar_jornada.png') // botão (opcional)
     // ── Áudio ────────────────────────────────────────────────────────
     AudioManager.preloadAudio(this)
   }

@@ -2,179 +2,186 @@ import Phaser from 'phaser'
 import { StorageManager } from '../data/StorageManager'
 
 export class MenuScene extends Phaser.Scene {
-  constructor() {
-    super({ key: 'MenuScene' })
-  }
+  constructor() { super({ key: 'MenuScene' }) }
+
+  // ── Personagem animado ────────────────────────────────────────────
+  private char!: Phaser.GameObjects.Image
+  private charVx   = 120
+  private charVy   = 0
+  private charX    = 120
+  private charY    = 0
+  private floorY   = 0
+  private leftWall = 40
+  private rightWall = 0
+  private nextJumpAt = 0
 
   create() {
     const { width, height } = this.cameras.main
-    const save = StorageManager.load()
+    this.floorY    = height - 72
+    this.rightWall = width - 40
+    this.charY     = this.floorY
 
-    // ── Fundo — colinas douradas (estilo da arte de referência) ──────
-    const sky = this.add.graphics()
-    sky.fillGradientStyle(0xfff8e1, 0xfff8e1, 0xf5d87a, 0xf5d87a, 1)
-    sky.fillRect(0, 0, width, height)
+    // ── Fundo ────────────────────────────────────────────────────────
+    if (this.textures.exists('tela_inicial')) {
+      this.add.image(width / 2, height / 2, 'tela_inicial')
+        .setDisplaySize(width, height).setDepth(0)
+    } else {
+      // Fallback gradiente dourado
+      const sky = this.add.graphics().setDepth(0)
+      sky.fillGradientStyle(0xfff8e1, 0xfff8e1, 0xf5d87a, 0xf5d87a, 1)
+      sky.fillRect(0, 0, width, height)
 
-    const hills = this.add.graphics()
-    hills.fillStyle(0xe8d090, 0.7)
-    hills.fillEllipse(160,  height - 40, 480, 200)
-    hills.fillEllipse(600,  height - 55, 500, 210)
-    hills.fillStyle(0xd4a860, 0.9)
-    hills.fillEllipse(380,  height - 30, 360, 160)
-    hills.fillStyle(0xc8a050, 1)
-    hills.fillRect(0, height - 55, width, 55)
+      const hills = this.add.graphics().setDepth(0)
+      hills.fillStyle(0xe8d090, 0.7);  hills.fillEllipse(160, height - 40, 480, 200)
+      hills.fillEllipse(600, height - 55, 500, 210)
+      hills.fillStyle(0xd4a860, 0.9);  hills.fillEllipse(380, height - 30, 360, 160)
+      hills.fillStyle(0xc8a050, 1);    hills.fillRect(0, height - 55, width, 55)
 
-    // Caminho dourado brilhante (detalhe das referências)
-    const pathG = this.add.graphics()
-    pathG.fillStyle(0xf5c842, 0.45)
-    pathG.fillEllipse(width / 2, height - 30, 220, 38)
-    pathG.fillStyle(0xfff8c0, 0.3)
-    pathG.fillEllipse(width / 2, height - 30, 100, 18)
+      this.drawTree(hills, 100, height - 80, 0.85)
+      this.drawTree(hills, 680, height - 90, 0.95)
+      this.drawTree(hills, 760, height - 75, 0.70)
 
-    // Árvores decorativas
-    this.drawTree(hills, 100,  height - 80, 0.85)
-    this.drawTree(hills, 680,  height - 90, 0.95)
-    this.drawTree(hills, 760,  height - 75, 0.7)
+      // Painel de título (só no fallback — tela_inicial.png já traz o título)
+      const titleBg = this.add.graphics().setDepth(1)
+      titleBg.fillStyle(0x1a0a2e, 0.78)
+      titleBg.fillRoundedRect(width / 2 - 230, 48, 460, 105, 16)
 
-    // ── Painel do título ──────────────────────────────────────────────
-    const titleBg = this.add.graphics()
-    titleBg.fillStyle(0x1a0a2e, 0.78)
-    titleBg.fillRoundedRect(width / 2 - 230, 48, 460, 105, 16)
+      this.add.text(width / 2, 82, 'O Peregrino do Catecismo', {
+        fontSize: '26px', color: '#f5c842', fontStyle: 'bold', fontFamily: 'Arial'
+      }).setOrigin(0.5).setDepth(2)
 
-    this.add.text(width / 2, 82, 'O Peregrino do Catecismo', {
-      fontSize: '26px', color: '#f5c842', fontStyle: 'bold', fontFamily: 'Arial'
-    }).setOrigin(0.5)
+      this.add.text(width / 2, 126, 'Aprenda o Catecismo Menor de Westminster', {
+        fontSize: '13px', color: '#fff8e1', fontFamily: 'Arial'
+      }).setOrigin(0.5).setDepth(2)
+    }
 
-    this.add.text(width / 2, 126, 'Aprenda o Catecismo Menor de Westminster', {
-      fontSize: '13px', color: '#fff8e1', fontFamily: 'Arial'
-    }).setOrigin(0.5)
+    // ── Personagem animado (sprites reais) ────────────────────────────
+    this.char = this.add.image(this.charX, this.charY, 'stop')
+      .setScale(0.58).setDepth(5)
+    this.nextJumpAt = this.time.now + Phaser.Math.Between(800, 2500)
 
-    // ── Peregrino chibi animado ───────────────────────────────────────
-    const pilgrim = this.drawPilgrim(width / 2 + 145, height - 115)
-    this.tweens.add({
-      targets: pilgrim, y: '-=7', yoyo: true, repeat: -1, duration: 850, ease: 'Sine.easeInOut'
-    })
-
-    // ── Botões ────────────────────────────────────────────────────────
+    // ── Botão Iniciar Jornada ─────────────────────────────────────────
+    const save   = StorageManager.load()
     const hasSave = save.currentPhase > 1 || save.totalScore > 0
 
-    if (hasSave) {
-      const continueBtn = this.createButton(width / 2, height - 215, '▶  Continuar Jornada', 0x27ae60)
-      continueBtn.on('pointerdown', () => {
-        this.scene.start('QuizScene', {
-          phaseIndex: Math.max(0, save.currentPhase - 1),
-          score: save.totalScore,
-          lives: save.lives
-        })
+    if (this.textures.exists('botao_iniciar')) {
+      // Novo layout com asset de botão
+      const btnY = height * 0.76
+      const btn  = this.add.image(width / 2, btnY, 'botao_iniciar')
+        .setDepth(6).setInteractive({ useHandCursor: true })
+      btn.on('pointerover', () => this.tweens.add({ targets: btn, scale: 1.06, duration: 100 }))
+      btn.on('pointerout',  () => this.tweens.add({ targets: btn, scale: 1.0,  duration: 100 }))
+      btn.on('pointerdown', () => {
+        StorageManager.reset()
+        this.scene.start('QuizScene', { phaseIndex: 0, score: 0, lives: 1 })
       })
+
+      if (hasSave) {
+        const contBtn = this.createButton(width / 2, btnY - 68, '▶  Continuar Jornada', 0x27ae60)
+        contBtn.on('pointerdown', () => {
+          this.scene.start('QuizScene', {
+            phaseIndex: Math.max(0, save.currentPhase - 1),
+            score: save.totalScore,
+            lives:  save.lives
+          })
+        })
+      }
+    } else {
+      // Fallback — botões de texto
+      if (hasSave) {
+        const contBtn = this.createButton(width / 2, height - 215, '▶  Continuar Jornada', 0x27ae60)
+        contBtn.on('pointerdown', () => {
+          this.scene.start('QuizScene', {
+            phaseIndex: Math.max(0, save.currentPhase - 1),
+            score: save.totalScore,
+            lives:  save.lives
+          })
+        })
+      }
+      const yNew   = hasSave ? height - 158 : height - 185
+      const newBtn = this.createButton(width / 2, yNew,
+        hasSave ? '↺  Nova Jornada' : '▶  Iniciar Jornada', 0xe8a020)
+      newBtn.on('pointerdown', () => {
+        StorageManager.reset()
+        this.scene.start('QuizScene', { phaseIndex: 0, score: 0, lives: 1 })
+      })
+
+      if (save.totalScore > 0) {
+        this.add.text(width / 2, height - 12, `Melhor pontuação: ${save.totalScore} pts`, {
+          fontSize: '12px', color: '#5c3a00', fontFamily: 'Arial'
+        }).setOrigin(0.5).setDepth(6)
+      }
     }
 
-    const yNew = hasSave ? height - 158 : height - 185
-    const newBtn = this.createButton(width / 2, yNew, hasSave ? '↺  Nova Jornada' : '▶  Iniciar Jornada', 0xe8a020)
-    newBtn.on('pointerdown', () => {
-      StorageManager.reset()
-      this.scene.start('QuizScene', { phaseIndex: 0, score: 0, lives: 1 })
-    })
+    // ── Instruções de controle ────────────────────────────────────────
+    this.add.text(width / 2, height - 12,
+      '← → Mover  |  SPACE Pular  |  V Artefato  |  ↓ Agachar', {
+        fontSize: '11px', color: '#5c3a00', fontFamily: 'Arial',
+        stroke: '#ffffffaa', strokeThickness: 2
+      }).setOrigin(0.5).setDepth(8)
+  }
 
-    // ── Pontuação salva ───────────────────────────────────────────────
-    if (save.totalScore > 0) {
-      this.add.text(width / 2, height - 12, `Melhor pontuação: ${save.totalScore} pts`, {
-        fontSize: '12px', color: '#5c3a00', fontFamily: 'Arial'
-      }).setOrigin(0.5)
+  update(time: number, delta: number) {
+    if (!this.char) return
+    const dt = delta / 1000
+
+    // Gravidade quando no ar
+    if (this.charY < this.floorY) {
+      this.charVy += 900 * dt
     }
 
-    // ── Instruções ───────────────────────────────────────────────────
-    this.add.text(width / 2, height - 100, '← → Mover  |  SPACE Pular  |  V Artefato  |  ↓ Agachar', {
-      fontSize: '11px', color: '#5c3a00', fontFamily: 'Arial'
-    }).setOrigin(0.5)
+    // Atualiza posição
+    this.charX += this.charVx * dt
+    this.charY += this.charVy * dt
+
+    // Chão
+    if (this.charY >= this.floorY) {
+      this.charY        = this.floorY
+      this.charVy       = 0
+    }
+
+    // Paredes — rebate
+    if (this.charX <= this.leftWall) {
+      this.charX  = this.leftWall
+      this.charVx = Math.abs(this.charVx)
+    } else if (this.charX >= this.rightWall) {
+      this.charX  = this.rightWall
+      this.charVx = -Math.abs(this.charVx)
+    }
+
+    // Pulo aleatório quando no chão
+    const onGround = this.charY >= this.floorY
+    if (onGround && time >= this.nextJumpAt) {
+      this.charVy    = -520
+      this.nextJumpAt = time + Phaser.Math.Between(1500, 4000)
+    }
+
+    // Posição e sprite
+    this.char.setPosition(this.charX, this.charY)
+    this.char.setFlipX(this.charVx < 0)
+
+    if (!onGround) {
+      this.char.setTexture('jump')
+    } else if (Math.abs(this.charVx) > 10) {
+      const frame = Math.floor(time / 120) % 2
+      this.char.setTexture(frame === 0 ? 'walk_1' : 'walk_2')
+    } else {
+      this.char.setTexture('stop')
+    }
   }
 
-  // ── Peregrino chibi desenhado (fiel ao concept art) ──────────────
-  private drawPilgrim(x: number, y: number): Phaser.GameObjects.Graphics {
-    const g = this.add.graphics()
-
-    // Sombra
-    g.fillStyle(0x000000, 0.12)
-    g.fillEllipse(x, y + 38, 52, 12)
-
-    // Cajado (vara de madeira)
-    g.fillStyle(0x7a4f2a, 1)
-    g.fillRect(x + 18, y - 46, 5, 84)
-    g.fillStyle(0x5a3518, 1)
-    g.fillRect(x + 18, y - 46, 5, 10)
-
-    // Mochila
-    g.fillStyle(0x8b5e3c, 1)
-    g.fillRoundedRect(x - 24, y - 10, 12, 20, 3)
-    g.fillStyle(0x6b4424, 1)
-    g.fillRect(x - 24, y - 5, 12, 2)
-    g.fillRect(x - 24, y + 2, 12, 2)
-
-    // Robe (túnica bege/dourada)
-    g.fillStyle(0xd4a855, 1)
-    g.fillRoundedRect(x - 16, y - 12, 34, 46, 7)
-    // Detalhe do cinto
-    g.fillStyle(0xb88a3a, 1)
-    g.fillRect(x - 14, y + 8, 30, 3)
-
-    // Pernas
-    g.fillStyle(0xc89040, 1)
-    g.fillRect(x - 10, y + 32, 9, 10)
-    g.fillRect(x + 4,  y + 32, 9, 10)
-    // Sandálias
-    g.fillStyle(0x7a4a24, 1)
-    g.fillRect(x - 12, y + 40, 12, 4)
-    g.fillRect(x + 3,  y + 40, 12, 4)
-
-    // Capuz/gola
-    g.fillStyle(0xc49040, 1)
-    g.fillRoundedRect(x - 15, y - 16, 30, 14, 4)
-
-    // Cabeça
-    g.fillStyle(0xf0c088, 1)
-    g.fillCircle(x, y - 28, 19)
-
-    // Cabelo castanho escuro
-    g.fillStyle(0x3a1f08, 1)
-    g.fillEllipse(x, y - 40, 34, 18)
-    g.fillRect(x - 17, y - 44, 12, 18)   // lateral esquerda
-    g.fillRoundedRect(x - 19, y - 30, 6, 10, 3) // franja lateral
-
-    // Olhos grandes chibi
-    g.fillStyle(0x1a1a1a, 1)
-    g.fillCircle(x - 6, y - 28, 3.5)
-    g.fillCircle(x + 6, y - 28, 3.5)
-    // brilho nos olhos
-    g.fillStyle(0xffffff, 1)
-    g.fillCircle(x - 5, y - 30, 1.2)
-    g.fillCircle(x + 7, y - 30, 1.2)
-
-    // Bochechas rosadas
-    g.fillStyle(0xffaaaa, 0.55)
-    g.fillCircle(x - 12, y - 23, 4.5)
-    g.fillCircle(x + 12, y - 23, 4.5)
-
-    // Sorriso
-    g.lineStyle(2, 0x8b4513, 1)
-    g.beginPath()
-    g.arc(x, y - 21, 5.5, 0.1, Math.PI - 0.1, false)
-    g.strokePath()
-
-    return g
-  }
+  // ── Helpers ───────────────────────────────────────────────────────
 
   private drawTree(g: Phaser.GameObjects.Graphics, x: number, y: number, scale = 1) {
-    g.fillStyle(0x7a5530, 1)
-    g.fillRect(x - 4 * scale, y, 8 * scale, 32 * scale)
-    g.fillStyle(0x5a7a2c, 1)
-    g.fillCircle(x, y - 18 * scale, 24 * scale)
+    g.fillStyle(0x7a5530, 1);  g.fillRect(x - 4 * scale, y, 8 * scale, 32 * scale)
+    g.fillStyle(0x5a7a2c, 1);  g.fillCircle(x, y - 18 * scale, 24 * scale)
     g.fillStyle(0x6a9034, 0.7)
     g.fillCircle(x - 14 * scale, y - 8 * scale, 15 * scale)
     g.fillCircle(x + 14 * scale, y - 10 * scale, 15 * scale)
   }
 
   private createButton(x: number, y: number, label: string, color: number): Phaser.GameObjects.Container {
-    const c  = this.add.container(x, y)
+    const c  = this.add.container(x, y).setDepth(7)
     const bg = this.add.graphics()
     bg.fillStyle(color, 1)
     bg.fillRoundedRect(-125, -24, 250, 48, 11)

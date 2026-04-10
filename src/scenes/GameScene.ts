@@ -407,17 +407,16 @@ export class GameScene extends Phaser.Scene {
     const W = this.levelWidth
 
     if (this.textures.exists('landscape2')) {
-      // landscape2 é mais largo → rola em paralaxe lenta
-      const sf = 0.25
-      const numTiles = Math.ceil(W * (1 - sf) / vw) + 3
-      for (let i = 0; i < numTiles; i++) {
-        this.add.image(i * vw + vw / 2, vh / 2, 'landscape2')
-          .setDisplaySize(vw, vh).setScrollFactor(sf).setDepth(-10)
-      }
+      // landscape2 é uma imagem larga — estica pela largura total do nível e rola com o jogador
+      this.add.image(W / 2, vh / 2, 'landscape2')
+        .setDisplaySize(W, vh).setScrollFactor(1).setDepth(-10)
     } else {
-      // fallback: landscape fixo
-      this.add.image(vw / 2, vh / 2, 'landscape')
-        .setDisplaySize(vw, vh).setScrollFactor(0).setDepth(-10)
+      // fallback: tiles de landscape cobrindo toda a largura do nível (rola com o jogador)
+      const numTiles = Math.ceil(W / vw) + 1
+      for (let i = 0; i < numTiles; i++) {
+        this.add.image(i * vw + vw / 2, vh / 2, 'landscape')
+          .setDisplaySize(vw, vh).setScrollFactor(1).setDepth(-10)
+      }
     }
 
   }
@@ -430,16 +429,21 @@ export class GameScene extends Phaser.Scene {
     const shifted = layout.platforms.map(([x, y, w, h]) => [x, y - Y_SHIFT, w, h] as [number,number,number,number])
 
     shifted.forEach(([x, y, w, h]) => {
-      const block = this.platforms.create(x + w / 2, y + h / 2, 'platform_tile') as Phaser.Physics.Arcade.Sprite
-      block.setDisplaySize(w, h).setAlpha(0).refreshBody()
-
       const isGround = y + Y_SHIFT + h >= vh - 10  // checa y original (antes do shift)
-      if (isGround) return  // terra: visual do landscape cuida disso
 
-      // Plataforma flutuante: visual proporcional (ilha oval)
-      const visualH = Math.min(Math.round(w * 0.55), 60)
-      this.add.image(x + w / 2, y + visualH / 2, 'platform_tile')
-        .setDisplaySize(w, visualH).setDepth(2)
+      if (isGround) {
+        // Chão — hitbox simples, visual pelo landscape
+        const block = this.platforms.create(x + w / 2, y + h / 2, 'platform_tile') as Phaser.Physics.Arcade.Sprite
+        block.setDisplaySize(w, h).setAlpha(0).refreshBody()
+      } else {
+        // Plataforma flutuante — superfície visível da oval fica ~25% abaixo do topo da imagem
+        const visualH = Math.min(Math.round(w * 0.55), 60)
+        const surfaceOffset = Math.round(visualH * 0.25)  // desloca hitbox para alinhar com a borda da oval
+        const block = this.platforms.create(x + w / 2, y + surfaceOffset + h / 2, 'platform_tile') as Phaser.Physics.Arcade.Sprite
+        block.setDisplaySize(w, h).setAlpha(0).refreshBody()
+        this.add.image(x + w / 2, y + visualH / 2, 'platform_tile')
+          .setDisplaySize(w, visualH).setDepth(2)
+      }
     })
 
     // ── Marcadores de buracos no chão ─────────────────────────────────

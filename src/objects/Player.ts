@@ -67,7 +67,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   addHeart(): boolean {
     if (this.hearts < 3) {
-      this.hearts = Math.min(3, this.hearts + 1)
+      this.hearts = 3  // restaura todos os corações
       this.onHeartChangeCallback?.(this.hearts)
       return true
     }
@@ -157,7 +157,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   private shoot() {
     this.isShooting = true
-    this.scene.time.delayedCall(480, () => { this.isShooting = false })
+    this.scene.time.delayedCall(1440, () => { this.isShooting = false })
 
     const proj = this.projectiles.get() as Phaser.Physics.Arcade.Sprite
     if (!proj) return
