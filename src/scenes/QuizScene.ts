@@ -163,17 +163,9 @@ export class QuizScene extends Phaser.Scene {
   }
 
   private drawBackground(width: number, height: number) {
-    const sky = this.add.graphics()
-    sky.fillGradientStyle(0xfff8e1, 0xfff8e1, 0xf5d060, 0xf5d060, 1)
-    sky.fillRect(0, 0, width, height)
-    const h = this.add.graphics()
-    h.fillStyle(0xe8d090, 0.55)
-    h.fillEllipse(150, height - 25, 480, 190)
-    h.fillEllipse(520, height - 15, 560, 210)
-    h.fillEllipse(730, height - 40, 380, 170)
-    h.fillStyle(0xc8a050, 1); h.fillRect(0, height - 48, width, 48)
-    h.fillStyle(0x7ab030, 1); h.fillRect(0, height - 48, width, 6)
-    h.fillStyle(0xf5c842, 0.4); h.fillEllipse(width / 2, height - 28, 200, 34)
+    // Usa a imagem question.png como fundo da tela de perguntas
+    this.add.image(width / 2, height / 2, 'question_bg')
+      .setDisplaySize(width, height).setDepth(-1)
   }
 
   private drawSmallPilgrim(x: number, y: number) {

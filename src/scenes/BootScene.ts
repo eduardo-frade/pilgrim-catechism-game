@@ -36,7 +36,9 @@ export class BootScene extends Phaser.Scene {
     this.load.image('throwing_light', 'assets/sprites/throwing_light.png')
     // ── Cenário ───────────────────────────────────────────────────────
     this.load.image('landscape',      'assets/sprites/landscape.png')
+    this.load.image('landscape2',     'assets/sprites/landscape2.png')  // fundo maior (opcional)
     this.load.image('platform_tile',  'assets/sprites/platform.png')
+    this.load.image('hole',           'assets/sprites/hole.png')         // marcador de buraco (opcional)
     this.load.image('main_title',     'assets/sprites/main_title.png')
     this.load.image('question_bg',    'assets/sprites/question.png')
     // ── Áudio ────────────────────────────────────────────────────────

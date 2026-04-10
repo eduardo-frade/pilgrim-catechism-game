@@ -226,6 +226,9 @@ const PHASE_LAYOUTS = [
   }
 ]
 
+// Shift all game elements up so character walks on landscape's visible sandy surface
+const Y_SHIFT = 133
+
 export class GameScene extends Phaser.Scene {
   private player!: Player
   // Exposto para o HUDScene controlar via toque
@@ -294,7 +297,7 @@ export class GameScene extends Phaser.Scene {
       const layout = PHASE_LAYOUTS[this.phaseIndex % PHASE_LAYOUTS.length]
       this.player.takeDamage()
       if (this.player.getHearts() > 0) {
-        this.player.setPosition(layout.playerStart.x, layout.playerStart.y - 60)
+        this.player.setPosition(layout.playerStart.x, layout.playerStart.y - Y_SHIFT - 60)
         ;(this.player.body as Phaser.Physics.Arcade.Body).setVelocity(0, 0)
       }
     }
@@ -380,12 +383,14 @@ export class GameScene extends Phaser.Scene {
     this.phaseEnded = true
     StorageManager.save({ currentPhase: this.phaseIndex + 2, totalScore: this.score, lives: this.lives })
     this.scene.stop('HUDScene')
-    this.scene.start('ResultScene', {
-      phaseIndex: this.phaseIndex,
-      score:      this.score,
-      lives:      this.lives,
-      question:   catechism[this.phaseIndex % catechism.length]
-    })
+    // Vai direto para o quiz da próxima fase (sem tela de leitura da resposta)
+    const nextPhase = this.phaseIndex + 1
+    if (nextPhase >= PHASE_LAYOUTS.length) {
+      StorageManager.reset()
+      this.scene.start('MenuScene')
+    } else {
+      this.scene.start('QuizScene', { phaseIndex: nextPhase, score: this.score, lives: this.lives })
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -396,38 +401,78 @@ export class GameScene extends Phaser.Scene {
     const { width: vw, height: vh } = this.cameras.main
     const W = this.levelWidth
 
-    // Background landscape (fixed, covers viewport)
-    this.add.image(vw / 2, vh / 2, 'landscape')
-      .setDisplaySize(vw, vh).setScrollFactor(0).setDepth(-10)
+    if (this.textures.exists('landscape2')) {
+      // landscape2 é mais largo → rola em paralaxe lenta
+      const sf = 0.25
+      const numTiles = Math.ceil(W * (1 - sf) / vw) + 3
+      for (let i = 0; i < numTiles; i++) {
+        this.add.image(i * vw + vw / 2, vh / 2, 'landscape2')
+          .setDisplaySize(vw, vh).setScrollFactor(sf).setDepth(-10)
+      }
+    } else {
+      // fallback: landscape fixo
+      this.add.image(vw / 2, vh / 2, 'landscape')
+        .setDisplaySize(vw, vh).setScrollFactor(0).setDepth(-10)
+    }
 
-    // Dark earth strip spanning full level width (below the landscape ground line)
-    this.add.graphics().setDepth(-7)
-      .fillStyle(0x5c3a1e, 1)
-      .fillRect(0, vh - 32, W, 32)
+    // Faixa de terra escura abaixo do nível do chão (cobre a parte inferior)
+    const gndY = 418 - Y_SHIFT   // = 285
+    this.add.graphics().setDepth(-8)
+      .fillStyle(0x4a2e10, 1)
+      .fillRect(0, gndY + 20, W, vh - gndY)
   }
 
   private buildPlatforms(layout: typeof PHASE_LAYOUTS[0]) {
     this.platforms = this.physics.add.staticGroup()
     const vh = this.game.canvas.height
 
-    layout.platforms.forEach(([x, y, w, h]) => {
-      // Invisible physics body at exact layout dimensions
+    // Shifted platforms
+    const shifted = layout.platforms.map(([x, y, w, h]) => [x, y - Y_SHIFT, w, h] as [number,number,number,number])
+
+    shifted.forEach(([x, y, w, h]) => {
       const block = this.platforms.create(x + w / 2, y + h / 2, 'platform_tile') as Phaser.Physics.Arcade.Sprite
       block.setDisplaySize(w, h).setAlpha(0).refreshBody()
 
-      const isGround = y + h >= vh - 10   // ground-level platforms: landscape handles visual
-      if (!isGround) {
-        // Floating platform visual: oval island at natural proportions, hangs below physics top
-        const visualH = Math.min(Math.round(w * 0.55), 60)
-        this.add.image(x + w / 2, y + visualH / 2, 'platform_tile')
-          .setDisplaySize(w, visualH).setDepth(2)
-      }
+      const isGround = y + h >= vh - 10
+      if (isGround) return  // terra: visual do landscape cuida disso
+
+      // Plataforma flutuante: visual proporcional (ilha oval)
+      const visualH = Math.min(Math.round(w * 0.55), 60)
+      this.add.image(x + w / 2, y + visualH / 2, 'platform_tile')
+        .setDisplaySize(w, visualH).setDepth(2)
     })
+
+    // ── Marcadores de buracos no chão ─────────────────────────────────
+    const gndY = 418 - Y_SHIFT   // = 285
+    const groundIntervals = shifted
+      .filter(([, y, , h]) => y + h >= vh - 10)
+      .map(([x, , w]) => [x, x + w] as [number, number])
+      .sort((a, b) => a[0] - b[0])
+
+    const hasHole = this.textures.exists('hole')
+    for (let i = 0; i < groundIntervals.length - 1; i++) {
+      const gapStart = groundIntervals[i][1]
+      const gapEnd   = groundIntervals[i + 1][0]
+      const gapW     = gapEnd - gapStart
+      if (gapW < 20) continue
+      const cx = gapStart + gapW / 2
+
+      if (hasHole) {
+        this.add.image(cx, gndY + 18, 'hole')
+          .setDisplaySize(gapW, 36).setDepth(-6)
+      } else {
+        // Sombra escura sem sprite
+        this.add.graphics().setDepth(-6)
+          .fillStyle(0x1a0800, 0.85)
+          .fillRect(gapStart, gndY, gapW, 36)
+      }
+    }
   }
 
   private spawnGoal(layout: typeof PHASE_LAYOUTS[0]) {
-    const { x, y } = layout.goal
-    const height   = this.game.canvas.height
+    const { x } = layout.goal
+    const y      = layout.goal.y - Y_SHIFT
+    const height = this.game.canvas.height
 
     // Poste da bandeira (estilo Mario)
     const pole = this.add.graphics().setDepth(3)
@@ -471,7 +516,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnPlayer(layout: typeof PHASE_LAYOUTS[0]) {
-    this.player = new Player(this, layout.playerStart.x, layout.playerStart.y)
+    this.player = new Player(this, layout.playerStart.x, layout.playerStart.y - Y_SHIFT)
   }
 
   private spawnEnemies(layout: typeof PHASE_LAYOUTS[0]) {
@@ -479,14 +524,14 @@ export class GameScene extends Phaser.Scene {
     layout.enemies.forEach(e => {
       if (e.x < safeZoneEnd) return
 
-      // Detect the bottommost platform that contains this enemy's x position
-      // so enemies on floating platforms spawn on the correct platform (not groundY)
+      // Detecta a plataforma mais baixa sob o inimigo (aplica Y_SHIFT)
       let spawnY = this.game.canvas.height - 48  // fallback
       let bestPlatformTop = -1
       for (const [px, py, pw] of layout.platforms) {
-        if (e.x >= px && e.x <= px + pw && py > bestPlatformTop) {
-          bestPlatformTop = py
-          spawnY = py - 32   // center just above platform top (enemy half-height ≈ 32px)
+        const shiftedPy = py - Y_SHIFT
+        if (e.x >= px && e.x <= px + pw && shiftedPy > bestPlatformTop) {
+          bestPlatformTop = shiftedPy
+          spawnY = shiftedPy - 32
         }
       }
 
@@ -497,7 +542,7 @@ export class GameScene extends Phaser.Scene {
 
   private spawnCollectibles(layout: typeof PHASE_LAYOUTS[0]) {
     layout.collectibles.forEach(c => {
-      this.collectibles.push(new Collectible(this, c.x, c.y, c.type as 'point' | 'life'))
+      this.collectibles.push(new Collectible(this, c.x, c.y - Y_SHIFT, c.type as 'point' | 'life'))
     })
   }
 

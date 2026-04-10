@@ -16,7 +16,7 @@ export class Collectible extends Phaser.Physics.Arcade.Sprite {
     body.setAllowGravity(false)
     body.setImmovable(true)
     this.setDepth(3)
-    this.setScale(type === 'point' ? 0.2 : 0.24)
+    this.setScale(type === 'point' ? 0.65 : 0.70)  // 3-4x maior para melhor visibilidade
 
     // Floating animation
     scene.tweens.add({

@@ -1,9 +1,9 @@
 import Phaser from 'phaser'
 
-const MOVE_SPEED    = 220
-const JUMP_FORCE    = -800
-const SHOOT_COOLDOWN = 350
-const PLAYER_SCALE  = 0.58   // 128px → ~74px display
+const MOVE_SPEED     = 220
+const JUMP_FORCE     = -600   // mais Mario: pulo menor e preciso (era -800)
+const SHOOT_COOLDOWN = 400
+const PLAYER_SCALE   = 0.58   // 128px → ~74px display
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
@@ -28,19 +28,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this)
     scene.physics.add.existing(this)
 
-    // setScale ANTES de setSize para o auto-centering usar o displayWidth correto
     this.setScale(PLAYER_SCALE)
     this.setDepth(5)
 
     const body = this.body as Phaser.Physics.Arcade.Body
-    body.setSize(42, 70)   // agora displayWidth = 74px → auto-centra corretamente
+    body.setSize(42, 70)
     body.setMaxVelocityX(300)
 
     this.cursors  = scene.input.keyboard!.createCursorKeys()
     this.keySpace = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
     this.keyV     = scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.V)
 
-    this.projectiles = scene.physics.add.group({ defaultKey: 'throwing_light', maxSize: 10 })
+    // 'power' é o projétil (bola de fogo); 'throwing_light' é a pose do personagem
+    this.projectiles = scene.physics.add.group({ defaultKey: 'power', maxSize: 10 })
   }
 
   getProjectiles()  { return this.projectiles }
@@ -87,14 +87,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (downDown && onGround) {
       if (!this.isCrouching) {
         this.isCrouching = true
-        this.setScale(PLAYER_SCALE, PLAYER_SCALE * 0.65)  // escala antes do setSize
-        body.setSize(36, 42)   // auto-centra no display escalonado
+        this.setScale(PLAYER_SCALE, PLAYER_SCALE * 0.65)
+        body.setSize(36, 42)
       }
       body.setVelocityX(body.velocity.x * 0.6)
     } else if (this.isCrouching) {
       this.isCrouching = false
-      this.setScale(PLAYER_SCALE)    // restaura escala antes do setSize
-      body.setSize(42, 70)            // auto-centra no display normal
+      this.setScale(PLAYER_SCALE)
+      body.setSize(42, 70)
     }
 
     // ── Mover ← → ──────────────────────────────────────────────────
@@ -113,7 +113,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    // ── Pular SPACE ─────────────────────────────────────────────────
+    // ── Pular SPACE — estilo Mario ──────────────────────────────────
     if (Phaser.Input.Keyboard.JustDown(this.keySpace) &&
         !this.isCrouching && (this.canJump || this.jumpCount < 1)) {
       body.setVelocityY(JUMP_FORCE)
@@ -121,9 +121,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.canJump = false
     }
 
-    // ── Pulo variável (soltar cedo = pulo mais baixo) ───────────────
-    if (!this.keySpace.isDown && body.velocity.y < -200) {
-      body.setVelocityY(body.velocity.y + 60)
+    // Pulo variável: soltar cedo = pulo menor (Mario-like)
+    if (!this.keySpace.isDown && body.velocity.y < -100) {
+      body.setVelocityY(body.velocity.y + 55)
     }
 
     // ── Arremessar V ────────────────────────────────────────────────
@@ -142,7 +142,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.isHurt) {
       this.setTexture('hurt')
     } else if (this.isShooting) {
-      this.setTexture('power')
+      this.setTexture('throwing_light')   // personagem em pose de arremesso
     } else if (this.isCrouching) {
       this.setTexture('down')
     } else if (!onGround) {
@@ -157,19 +157,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   private shoot() {
     this.isShooting = true
-    this.scene.time.delayedCall(220, () => { this.isShooting = false })
+    this.scene.time.delayedCall(480, () => { this.isShooting = false })
 
     const proj = this.projectiles.get() as Phaser.Physics.Arcade.Sprite
     if (!proj) return
     proj.setActive(true).setVisible(true)
-    proj.setPosition(this.x + (this.facingRight ? 20 : -20), this.y - 12)
-    proj.setScale(0.22).setDepth(4).setAngle(0)
+    proj.setTexture('power')
+    proj.setFlipX(!this.facingRight)
+    proj.setPosition(this.x + (this.facingRight ? 28 : -28), this.y - 18)
+    proj.setScale(0.30).setDepth(4).setAngle(0)
     const b = proj.body as Phaser.Physics.Arcade.Body
-    // Arco de lançamento: gravidade ativa + velocidade inicial inclinada (como uma pedra)
     b.setAllowGravity(true)
-    b.setVelocityX(this.facingRight ? 380 : -380)
-    b.setVelocityY(-380)   // lança em arco para cima
-    // Expira após 1.8s caso não bata em nada
+    b.setVelocityX(this.facingRight ? 360 : -360)
+    b.setVelocityY(-260)   // arco de pedra (mais baixo que antes)
     this.scene.time.delayedCall(1800, () => {
       if (proj.active) proj.setActive(false).setVisible(false)
     })
