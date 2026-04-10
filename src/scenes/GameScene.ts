@@ -2,7 +2,6 @@ import Phaser from 'phaser'
 import { Player } from '../objects/Player'
 import { Enemy } from '../objects/Enemy'
 import { Collectible } from '../objects/Collectible'
-import catechism from '../data/catechism.json'
 import worlds from '../data/worlds.json'
 import { StorageManager } from '../data/StorageManager'
 
