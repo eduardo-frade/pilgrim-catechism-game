@@ -67,12 +67,6 @@ export class MenuScene extends Phaser.Scene {
       })
     }
 
-    // ── Instruções de controle ─────────────────────────────────────────
-    this.add.text(width / 2, height - 10,
-      '← → Mover  |  SPACE Pular  |  V Artefato  |  ↓ Agachar', {
-        fontSize: '11px', color: '#5c3a00', fontFamily: 'Arial',
-        stroke: '#ffffff', strokeThickness: 2
-      }).setOrigin(0.5).setDepth(8)
   }
 
   update(time: number, delta: number) {

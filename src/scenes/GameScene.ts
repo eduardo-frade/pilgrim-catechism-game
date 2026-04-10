@@ -406,17 +406,13 @@ export class GameScene extends Phaser.Scene {
     const { width: vw, height: vh } = this.cameras.main
     const W = this.levelWidth
 
-    if (this.textures.exists('landscape2')) {
-      // landscape2 é uma imagem larga — estica pela largura total do nível e rola com o jogador
-      this.add.image(W / 2, vh / 2, 'landscape2')
-        .setDisplaySize(W, vh).setScrollFactor(1).setDepth(-10)
-    } else {
-      // fallback: tiles de landscape cobrindo toda a largura do nível (rola com o jogador)
-      const numTiles = Math.ceil(W / vw) + 1
-      for (let i = 0; i < numTiles; i++) {
-        this.add.image(i * vw + vw / 2, vh / 2, 'landscape')
-          .setDisplaySize(vw, vh).setScrollFactor(1).setDepth(-10)
-      }
+    // landscape2: 6223×720 — preserva proporção, escala para a altura da tela e tila se o nível for mais largo
+    const src   = this.textures.get('landscape2').getSourceImage() as HTMLImageElement
+    const dispW = Math.round((src.width / src.height) * vh)
+    const copies = Math.ceil(W / dispW) + 1
+    for (let i = 0; i < copies; i++) {
+      this.add.image(i * dispW + dispW / 2, vh / 2, 'landscape2')
+        .setDisplaySize(dispW, vh).setScrollFactor(1).setDepth(-10)
     }
 
   }
@@ -453,23 +449,15 @@ export class GameScene extends Phaser.Scene {
       .map(([x, , w]) => [x, x + w] as [number, number])
       .sort((a, b) => a[0] - b[0])
 
-    const hasHole = this.textures.exists('hole')
+    // Buracos — hole.png cobre do chão até o fundo da tela (topo da imagem = borda do chão)
+    const holeH = vh - gndY
     for (let i = 0; i < groundIntervals.length - 1; i++) {
       const gapStart = groundIntervals[i][1]
       const gapEnd   = groundIntervals[i + 1][0]
       const gapW     = gapEnd - gapStart
       if (gapW < 20) continue
-      const cx = gapStart + gapW / 2
-
-      if (hasHole) {
-        this.add.image(cx, gndY + 18, 'hole')
-          .setDisplaySize(gapW, 36).setDepth(-6)
-      } else {
-        // Sombra escura sem sprite
-        this.add.graphics().setDepth(-6)
-          .fillStyle(0x1a0800, 0.85)
-          .fillRect(gapStart, gndY, gapW, 36)
-      }
+      this.add.image(gapStart + gapW / 2, gndY + holeH / 2, 'hole')
+        .setDisplaySize(gapW, holeH).setDepth(-5)
     }
   }
 

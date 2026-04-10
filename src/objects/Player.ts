@@ -67,7 +67,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   addHeart(): boolean {
     if (this.hearts < 3) {
-      this.hearts = 3  // restaura todos os corações
+      this.hearts = Math.min(3, this.hearts + 1)  // +1 coração
       this.onHeartChangeCallback?.(this.hearts)
       return true
     }
