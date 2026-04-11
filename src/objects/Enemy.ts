@@ -27,7 +27,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.isDead) return
     const body = this.body as Phaser.Physics.Arcade.Body
 
-    // Patrulha
+    // Patrulha entre os limites
     if (this.x <= this.patrolLeft) {
       body.setVelocityX(this.speed)
       this.setFlipX(true)    // sprite padrão olha para esquerda; flip → direita
@@ -36,9 +36,32 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.setFlipX(false)   // sem flip → olha para esquerda
     }
 
-    // Não andar para fora das plataformas (verifica borda)
+    // ── Detecção de borda: não cair nos buracos ───────────────────
     if (body.blocked.down) {
-      // animação de wobble
+      const movingRight = body.velocity.x > 0
+      // Ponto de verificação: 6px à frente da borda do pé, 4px abaixo
+      const aheadX = movingRight ? body.right + 6 : body.left - 6
+      const belowY = body.bottom + 4
+
+      // Verifica se existe algum corpo estático (plataforma) logo abaixo desse ponto
+      const groundAhead = (
+        this.scene.physics.overlapRect(aheadX, belowY, 4, 8, false, true) as unknown as unknown[]
+      ).length > 0
+
+      if (!groundAhead) {
+        // Sem chão à frente — ajusta o limite de patrulha e inverte
+        if (movingRight) {
+          this.patrolRight = this.x - 24   // margem para não re-triggerar imediatamente
+          body.setVelocityX(-this.speed)
+          this.setFlipX(false)
+        } else {
+          this.patrolLeft = this.x + 24
+          body.setVelocityX(this.speed)
+          this.setFlipX(true)
+        }
+      }
+
+      // Animação de wobble
       const t = this.scene.time.now / 180
       this.setAngle(Math.sin(t) * 7)
     }
