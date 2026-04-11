@@ -11,13 +11,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private keySpace!: Phaser.Input.Keyboard.Key
   private projectiles!: Phaser.Physics.Arcade.Group
 
-  private canJump     = false
-  private jumpCount   = 0
-  private lastShot    = 0
-  private isHurt      = false
-  private isCrouching = false
-  private isShooting  = false
-  private facingRight = true
+  private canJump      = false
+  private jumpCount    = 0
+  private lastShot     = 0
+  private isHurt       = false
+  private isCrouching  = false
+  private isShooting   = false
+  private shootState: 'normal' | 'jump' | 'down' = 'normal'
+  private facingRight  = true
 
   private hearts = 3
   private onHeartChangeCallback?: (h: number) => void
@@ -133,7 +134,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (Phaser.Input.Keyboard.JustDown(this.keyV)) {
       const now = this.scene.time.now
       if (now - this.lastShot > SHOOT_COOLDOWN) {
-        this.shoot(); this.lastShot = now
+        this.shoot(onGround); this.lastShot = now
       }
     }
 
@@ -145,9 +146,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.isHurt) {
       this.setTexture('hurt')
     } else if (this.isShooting) {
-      this.setTexture('throwing_light')   // personagem em pose de arremesso
+      // Pose de arremesso depende do estado atual
+      if (this.shootState === 'jump') {
+        this.setTexture('jump_throwing_light')
+      } else if (this.shootState === 'down') {
+        this.setTexture('down_throwing_light')
+      } else {
+        this.setTexture('throwing_light')
+      }
     } else if (this.isCrouching) {
-      this.setTexture('down')
+      this.setTexture('down2')
     } else if (!onGround) {
       this.setTexture('jump')
     } else if (leftDown || rightDown) {
@@ -158,9 +166,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  private shoot() {
+  private shoot(onGround: boolean) {
+    // Captura o estado no momento do disparo para escolher o sprite correto
+    this.shootState = !onGround ? 'jump' : this.isCrouching ? 'down' : 'normal'
     this.isShooting = true
-    this.scene.time.delayedCall(720, () => { this.isShooting = false })
+    this.scene.time.delayedCall(33, () => { this.isShooting = false })  // ~2 frames @ 60fps
 
     const proj = this.projectiles.get() as Phaser.Physics.Arcade.Sprite
     if (!proj) return
@@ -211,6 +221,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
   shootNow() {
     const now = this.scene.time.now
-    if (now - this.lastShot > SHOOT_COOLDOWN) { this.shoot(); this.lastShot = now }
+    const onGround = (this.body as Phaser.Physics.Arcade.Body).blocked.down
+    if (now - this.lastShot > SHOOT_COOLDOWN) { this.shoot(onGround); this.lastShot = now }
   }
 }

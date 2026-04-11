@@ -25,15 +25,17 @@ export class BootScene extends Phaser.Scene {
     this.load.image('walk_1',         'assets/sprites/walk_1.png')
     this.load.image('walk_2',         'assets/sprites/walk_2.png')
     this.load.image('jump',           'assets/sprites/jump.png')
-    this.load.image('down',           'assets/sprites/down.png')
+    this.load.image('down2',          'assets/sprites/down2.png')
     this.load.image('power',          'assets/sprites/power.png')
     this.load.image('hurt',           'assets/sprites/hurt.png')
+    this.load.image('throwing_light',      'assets/sprites/throwing_light.png')
+    this.load.image('jump_throwing_light', 'assets/sprites/jump_throwing_light.png')
+    this.load.image('down_throwing_light', 'assets/sprites/down_throwing_light.png')
     // ── Inimigo ───────────────────────────────────────────────────────
     this.load.image('enemy',          'assets/sprites/enemy.png')
     // ── Coletáveis ────────────────────────────────────────────────────
     this.load.image('heart',          'assets/sprites/heart.png')
     this.load.image('light',          'assets/sprites/light.png')
-    this.load.image('throwing_light', 'assets/sprites/throwing_light.png')
     // ── Cenário ───────────────────────────────────────────────────────
     this.load.image('landscape',      'assets/sprites/landscape.png')
     this.load.image('landscape2',     'assets/sprites/landscape2.png')  // fundo maior (opcional)
