@@ -87,9 +87,12 @@ export class QuizScene extends Phaser.Scene {
       { text: this.question.wrong[1], isCorrect: false }
     ])
 
-    const BX = Math.round(width  * 0.135)   // ~108  (centro x dos botões)
-    const BW = Math.round(width  * 0.200)   // ~160  (largura do botão)
-    const BH = Math.round(height * 0.087)   // ~39   (altura do botão)
+    // Botões A/B/C ficam no lado esquerdo da imagem question2.png.
+    // BX = centro x dos botões desenhados; BW = largura deles.
+    // O texto da resposta fica À DIREITA, na área do pergaminho.
+    const BX = Math.round(width  * 0.135)   // ~108  centro x dos botões (imagem)
+    const BW = Math.round(width  * 0.200)   // ~160  largura do botão (imagem)
+    const BH = Math.round(height * 0.090)   // ~40   altura do botão
 
     const positions = [
       { x: BX, y: Math.round(height * 0.617) },  // A ~278
@@ -103,24 +106,34 @@ export class QuizScene extends Phaser.Scene {
   }
 
   private createAnswerBtn(
-    x: number, y: number, bw: number, bh: number,
+    btnCX: number, y: number, bw: number, bh: number,
     text: string, isCorrect: boolean
   ) {
-    // Texto da resposta sobre o botão desenhado na imagem question2
-    this.add.text(x, y, text, {
-      fontSize: '9px', color: '#3a1f00', fontFamily: 'Arial', fontStyle: 'bold',
-      wordWrap: { width: bw - 28 }, align: 'center'
+    const { width } = this.cameras.main
+
+    // Texto da resposta À DIREITA do botão, dentro do pergaminho
+    const btnRight  = btnCX + bw / 2               // ~188 — borda direita do botão
+    const scrollEnd = Math.round(width * 0.945)     // ~756 — borda direita do pergaminho
+    const textCX    = Math.round((btnRight + scrollEnd) / 2)   // ~472 — centro do texto
+    const textWrap  = scrollEnd - btnRight - 16     // ~552 — largura máxima do texto
+
+    this.add.text(textCX, y, text, {
+      fontSize: '12px', color: '#3a1f00', fontFamily: 'Arial', fontStyle: 'bold',
+      wordWrap: { width: textWrap }, align: 'center'
     }).setOrigin(0.5).setDepth(5)
 
-    // Zona interativa invisível cobrindo o botão
-    const zone = this.add.zone(x, y, bw, bh)
+    // Zona interativa cobre botão + texto (linha inteira)
+    const zoneCX = Math.round((btnCX - bw / 2 + scrollEnd) / 2)  // ~392 — centro da zona
+    const zoneW  = scrollEnd - (btnCX - bw / 2)                   // ~728 — largura da zona
+
+    const zone = this.add.zone(zoneCX, y, zoneW, bh)
       .setDepth(6).setInteractive({ useHandCursor: true })
 
-    // Overlay de feedback (inicialmente transparente)
-    const overlay = this.add.rectangle(x, y, bw, bh, 0x000000, 0)
+    // Overlay de feedback (inicialmente transparente), mesma área da zona
+    const overlay = this.add.rectangle(zoneCX, y, zoneW, bh, 0x000000, 0)
       .setDepth(5.5)
 
-    zone.on('pointerover', () => overlay.setFillStyle(0xffffff, 0.18))
+    zone.on('pointerover', () => overlay.setFillStyle(0xffffff, 0.15))
     zone.on('pointerout',  () => overlay.setFillStyle(0x000000, 0))
 
     zone.on('pointerdown', () => {

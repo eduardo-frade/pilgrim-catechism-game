@@ -11,14 +11,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private keySpace!: Phaser.Input.Keyboard.Key
   private projectiles!: Phaser.Physics.Arcade.Group
 
-  private canJump      = false
-  private jumpCount    = 0
-  private lastShot     = 0
-  private isHurt       = false
-  private isCrouching  = false
-  private isShooting   = false
-  private shootState: 'normal' | 'jump' | 'down' = 'normal'
-  private facingRight  = true
+  private canJump     = false
+  private jumpCount   = 0
+  private lastShot    = 0
+  private isHurt      = false
+  private isCrouching = false
+  private facingRight = true
 
   // ── Estado dos botões de toque (mobile) ──────────────────────────
   private touchLeft        = false
@@ -137,8 +135,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // ── Arremessar V ou toque (repete enquanto segurar) ────────────
-    const keyVPressed = Phaser.Input.Keyboard.JustDown(this.keyV)
-    if (keyVPressed || this.touchShootHeld) {
+    if (this.keyV.isDown || this.touchShootHeld) {
       const now = this.scene.time.now
       if (now - this.lastShot > SHOOT_COOLDOWN) {
         this.shoot(onGround); this.lastShot = now
@@ -150,17 +147,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private updateSprite(onGround: boolean, leftDown: boolean, rightDown: boolean) {
+    // Pose de arremesso persiste ENQUANTO a tecla/botão estiver pressionada
+    const throwing = this.keyV.isDown || this.touchShootHeld
+
     if (this.isHurt) {
       this.setTexture('hurt')
-    } else if (this.isShooting) {
-      // Pose de arremesso depende do estado atual
-      if (this.shootState === 'jump') {
-        this.setTexture('jump_throwing_light')
-      } else if (this.shootState === 'down') {
-        this.setTexture('down_throwing_light')
-      } else {
-        this.setTexture('throwing_light')
-      }
+    } else if (throwing) {
+      if (!onGround)          this.setTexture('jump_throwing_light')
+      else if (this.isCrouching) this.setTexture('down_throwing_light')
+      else                    this.setTexture('throwing_light')
     } else if (this.isCrouching) {
       this.setTexture('down2')
     } else if (!onGround) {
@@ -174,11 +169,6 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private shoot(onGround: boolean) {
-    // Captura o estado no momento do disparo para escolher o sprite correto
-    this.shootState = !onGround ? 'jump' : this.isCrouching ? 'down' : 'normal'
-    this.isShooting = true
-    this.scene.time.delayedCall(33, () => { this.isShooting = false })  // ~2 frames @ 60fps
-
     const proj = this.projectiles.get() as Phaser.Physics.Arcade.Sprite
     if (!proj) return
 

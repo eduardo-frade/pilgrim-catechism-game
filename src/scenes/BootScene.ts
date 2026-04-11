@@ -25,7 +25,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('walk_1',         'assets/sprites/walk_1.png')
     this.load.image('walk_2',         'assets/sprites/walk_2.png')
     this.load.image('jump',           'assets/sprites/jump.png')
-    this.load.image('down2',          'assets/sprites/down2.png')
+    this.load.image('down2',          'assets/sprites/down.png')    // TODO: trocar para down2.png após upload
     this.load.image('power',          'assets/sprites/power.png')
     this.load.image('hurt',           'assets/sprites/hurt.png')
     this.load.image('throwing_light',      'assets/sprites/throwing_light.png')
