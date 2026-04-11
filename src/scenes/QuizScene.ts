@@ -81,10 +81,15 @@ export class QuizScene extends Phaser.Scene {
     // ── Respostas sobre os botões A/B/C de question2.png ─────────────
     // question2.png é 1280×720 exibida em 800×450 (fator 0.625)
     // Botões ficam empilhados na esquerda inferior do pergaminho
+    // Seleciona 1 correta aleatória + 2 erradas aleatórias a cada rodada
+    const corretas  = this.question.corretas as string[]
+    const erradas   = this.shuffle([...(this.question.erradas as string[])])
+    const correctAns = corretas[Math.floor(Math.random() * corretas.length)]
+
     const answers = this.shuffle([
-      { text: this.question.correct,  isCorrect: true  },
-      { text: this.question.wrong[0], isCorrect: false },
-      { text: this.question.wrong[1], isCorrect: false }
+      { text: correctAns,  isCorrect: true  },
+      { text: erradas[0],  isCorrect: false },
+      { text: erradas[1],  isCorrect: false }
     ])
 
     // Botões A/B/C ficam no lado esquerdo da imagem question2.png.
@@ -95,9 +100,9 @@ export class QuizScene extends Phaser.Scene {
     const BH = Math.round(height * 0.090)   // ~40   altura do botão
 
     const positions = [
-      { x: BX, y: Math.round(height * 0.617) },  // A ~278
-      { x: BX, y: Math.round(height * 0.711) },  // B ~320
-      { x: BX, y: Math.round(height * 0.804) },  // C ~362
+      { x: BX, y: Math.round(height * 0.560) },  // A ~252
+      { x: BX, y: Math.round(height * 0.655) },  // B ~295
+      { x: BX, y: Math.round(height * 0.750) },  // C ~338
     ]
 
     answers.forEach((ans, i) => {
@@ -113,9 +118,9 @@ export class QuizScene extends Phaser.Scene {
 
     // Texto da resposta À DIREITA do botão, dentro do pergaminho
     const btnRight  = btnCX + bw / 2               // ~188 — borda direita do botão
-    const scrollEnd = Math.round(width * 0.945)     // ~756 — borda direita do pergaminho
-    const textCX    = Math.round((btnRight + scrollEnd) / 2)   // ~472 — centro do texto
-    const textWrap  = scrollEnd - btnRight - 16     // ~552 — largura máxima do texto
+    const scrollEnd = Math.round(width * 0.720)     // ~576 — mantém texto mais próximo dos botões
+    const textCX    = Math.round((btnRight + scrollEnd) / 2)   // ~382 — centro do texto
+    const textWrap  = scrollEnd - btnRight - 10     // ~378 — largura máxima do texto
 
     this.add.text(textCX, y, text, {
       fontSize: '12px', color: '#3a1f00', fontFamily: 'Arial', fontStyle: 'bold',
@@ -123,8 +128,8 @@ export class QuizScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(5)
 
     // Zona interativa cobre botão + texto (linha inteira)
-    const zoneCX = Math.round((btnCX - bw / 2 + scrollEnd) / 2)  // ~392 — centro da zona
-    const zoneW  = scrollEnd - (btnCX - bw / 2)                   // ~728 — largura da zona
+    const zoneCX = Math.round((btnCX - bw / 2 + scrollEnd) / 2)  // ~302 — centro da zona
+    const zoneW  = scrollEnd - (btnCX - bw / 2)                   // ~548 — largura da zona
 
     const zone = this.add.zone(zoneCX, y, zoneW, bh)
       .setDepth(6).setInteractive({ useHandCursor: true })

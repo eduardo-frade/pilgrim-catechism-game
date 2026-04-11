@@ -77,7 +77,7 @@ export class ResultScene extends Phaser.Scene {
         fontSize: '12px', color: '#f5c842', fontFamily: 'Arial', fontStyle: 'bold'
       }).setOrigin(0.5).setAlpha(0),
 
-      this.add.text(width / 2, cardY + 128, this.question.correct, {
+      this.add.text(width / 2, cardY + 128, (this.question as any).corretas?.[0] ?? '', {
         fontSize: '13px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
         wordWrap: { width: width - 90 }, align: 'center'
       }).setOrigin(0.5).setAlpha(0)
