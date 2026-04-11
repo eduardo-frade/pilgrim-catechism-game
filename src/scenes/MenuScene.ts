@@ -6,7 +6,7 @@ export class MenuScene extends Phaser.Scene {
 
   // ── Personagem animado ────────────────────────────────────────────
   private char!: Phaser.GameObjects.Image
-  private charVx    = 110          // px/s
+  private charVx    = 110
   private charVy    = 0
   private charX     = 0
   private charY     = 0
@@ -22,9 +22,9 @@ export class MenuScene extends Phaser.Scene {
     this.add.image(width / 2, height / 2, 'tela_inicial')
       .setDisplaySize(width, height).setDepth(0)
 
-    // ── Personagem andando aleatoriamente (restrito à metade esquerda) ──
+    // ── Personagem (restrito à metade esquerda) ───────────────────────
     this.floorY    = height - 70
-    this.rightWall = Math.round(width * 0.40)   // não invade a área dos botões
+    this.rightWall = Math.round(width * 0.38)
     this.charX     = Phaser.Math.Between(this.leftWall + 20, this.rightWall - 20)
     this.charY     = this.floorY
 
@@ -33,19 +33,22 @@ export class MenuScene extends Phaser.Scene {
     this.nextJumpAt = this.time.now + Phaser.Math.Between(800, 2500)
 
     // ── Botões ─────────────────────────────────────────────────────────
+    // Largura alvo dos botões em pixels (mantém proporção natural da imagem)
     const save    = StorageManager.load()
     const hasSave = save.currentPhase > 1 || save.totalScore > 0
 
-    // Botões posicionados no centro-direita (60% da largura), tamanho fixo ~300×65
-    const btnX = Math.round(width * 0.65)
-    const BTN_W = 300
-    const BTN_H = 65
+    const BTN_W = 260          // largura alvo
+    const btnX  = Math.round(width * 0.65)   // centro-direita
 
     if (hasSave) {
-      // Dois botões: Continuar + Nova Jornada
-      const btnContinuar = this.add.image(btnX, Math.round(height * 0.52), 'btn_continuar')
-        .setDisplaySize(BTN_W, BTN_H).setDepth(6).setInteractive({ useHandCursor: true })
-      this.addHover(btnContinuar)
+      // "Iniciar Jornada" no topo, "Continuar Jornada" abaixo
+      const btnIniciar = this.makeBtn('btn_iniciar',  btnX, Math.round(height * 0.50), BTN_W)
+      btnIniciar.on('pointerdown', () => {
+        StorageManager.reset()
+        this.scene.start('QuizScene', { phaseIndex: 0, score: 0, lives: 1 })
+      })
+
+      const btnContinuar = this.makeBtn('btn_continuar', btnX, Math.round(height * 0.65), BTN_W)
       btnContinuar.on('pointerdown', () => {
         this.scene.start('QuizScene', {
           phaseIndex: Math.max(0, save.currentPhase - 1),
@@ -53,41 +56,27 @@ export class MenuScene extends Phaser.Scene {
           lives:  save.lives
         })
       })
-
-      const btnNova = this.add.image(btnX, Math.round(height * 0.66), 'btn_nova')
-        .setDisplaySize(BTN_W, BTN_H).setDepth(6).setInteractive({ useHandCursor: true })
-      this.addHover(btnNova)
-      btnNova.on('pointerdown', () => {
-        StorageManager.reset()
-        this.scene.start('QuizScene', { phaseIndex: 0, score: 0, lives: 1 })
-      })
     } else {
-      // Só o botão Iniciar
-      const btnIniciar = this.add.image(btnX, Math.round(height * 0.59), 'btn_iniciar')
-        .setDisplaySize(BTN_W, BTN_H).setDepth(6).setInteractive({ useHandCursor: true })
-      this.addHover(btnIniciar)
+      // Só "Iniciar Jornada"
+      const btnIniciar = this.makeBtn('btn_iniciar', btnX, Math.round(height * 0.58), BTN_W)
       btnIniciar.on('pointerdown', () => {
         StorageManager.reset()
         this.scene.start('QuizScene', { phaseIndex: 0, score: 0, lives: 1 })
       })
     }
-
   }
 
   update(time: number, delta: number) {
     if (!this.char) return
     const dt = delta / 1000
 
-    // Gravidade quando no ar
     if (this.charY < this.floorY) this.charVy += 900 * dt
 
     this.charX += this.charVx * dt
     this.charY  = Math.min(this.charY + this.charVy * dt, this.floorY)
 
-    // Chão
     if (this.charY >= this.floorY) this.charVy = 0
 
-    // Paredes — rebate
     if (this.charX <= this.leftWall) {
       this.charX  = this.leftWall
       this.charVx = Math.abs(this.charVx)
@@ -96,14 +85,12 @@ export class MenuScene extends Phaser.Scene {
       this.charVx = -Math.abs(this.charVx)
     }
 
-    // Pulo aleatório quando no chão
     const onGround = this.charY >= this.floorY
     if (onGround && time >= this.nextJumpAt) {
       this.charVy    = -520
       this.nextJumpAt = time + Phaser.Math.Between(1500, 4000)
     }
 
-    // Sprite
     this.char.setPosition(this.charX, this.charY).setFlipX(this.charVx < 0)
 
     if (!onGround) {
@@ -115,8 +102,18 @@ export class MenuScene extends Phaser.Scene {
     }
   }
 
-  private addHover(img: Phaser.GameObjects.Image) {
-    img.on('pointerover', () => this.tweens.add({ targets: img, scale: 1.06, duration: 100 }))
-    img.on('pointerout',  () => this.tweens.add({ targets: img, scale: 1.0,  duration: 100 }))
+  // Cria botão com escala proporcional (mantém aspecto natural da imagem)
+  private makeBtn(key: string, x: number, y: number, targetW: number): Phaser.GameObjects.Image {
+    const src   = this.textures.get(key).getSourceImage() as HTMLImageElement
+    const scale = targetW / src.width
+    const img   = this.add.image(x, y, key)
+      .setScale(scale).setDepth(6).setInteractive({ useHandCursor: true })
+
+    // Efeito de pressionar (sem crescer — funciona bem no touch)
+    img.on('pointerdown', () => this.tweens.add({ targets: img, scale: scale * 0.93, duration: 80 }))
+    img.on('pointerup',   () => this.tweens.add({ targets: img, scale: scale,         duration: 80 }))
+    img.on('pointerout',  () => this.tweens.add({ targets: img, scale: scale,         duration: 80 }))
+
+    return img
   }
 }

@@ -41,6 +41,10 @@ export class Collectible extends Phaser.Physics.Arcade.Sprite {
   }
 
   collect() {
+    // Desativa imediatamente — impede que o overlap dispare múltiplas vezes por frame
+    this.setActive(false)
+    ;(this.body as Phaser.Physics.Arcade.Body).enable = false
+
     this.scene.tweens.add({
       targets: this,
       y: this.y - 40,
