@@ -548,7 +548,10 @@ export class GameScene extends Phaser.Scene {
       this.player.getProjectiles(), this.platforms,
       (proj) => {
         const p = proj as Phaser.Physics.Arcade.Sprite
-        if (p.active) p.setActive(false).setVisible(false)
+        if (p.active) {
+          p.setActive(false).setVisible(false)
+          ;(p.body as Phaser.Physics.Arcade.Body).enable = false
+        }
       }
     )
 
@@ -576,7 +579,10 @@ export class GameScene extends Phaser.Scene {
       // Projétil acertou inimigo
       this.physics.add.overlap(this.player.getProjectiles(), enemy, (proj) => {
         if (!enemy.isAlive()) return
-        ;(proj as Phaser.Physics.Arcade.Sprite).setActive(false).setVisible(false)
+        const p = proj as Phaser.Physics.Arcade.Sprite
+        if (!p.active) return
+        p.setActive(false).setVisible(false)
+        ;(p.body as Phaser.Physics.Arcade.Body).enable = false
         enemy.hitByProjectile()
         this.addScore(30, '+30 ⭐')
       })

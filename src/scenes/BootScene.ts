@@ -41,6 +41,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('hole',           'assets/sprites/hole.png')         // marcador de buraco (opcional)
     this.load.image('main_title',       'assets/sprites/main_title.png')
     this.load.image('question_bg',      'assets/sprites/question.png')
+    this.load.image('question2',        'assets/sprites/question2.png')
     // ── Assets da tela de início ──────────────────────────────────────
     this.load.image('tela_inicial',     'assets/sprites/tela_inicial.png')
     this.load.image('btn_iniciar',      'assets/sprites/botao_iniciar_jornada.png')

@@ -172,16 +172,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     proj.setActive(true).setVisible(true)
     proj.setTexture('power')
     proj.setFlipX(!this.facingRight)
-    proj.setPosition(this.x + (this.facingRight ? 28 : -28), this.y - 18)
     proj.setScale(0.60).setDepth(4).setAngle(0)
+
+    const spawnX = this.x + (this.facingRight ? 28 : -28)
+    const spawnY = this.y - 18
     const b = proj.body as Phaser.Physics.Arcade.Body
+    b.enable = true
+    b.reset(spawnX, spawnY)   // reposiciona + zera velocidade/aceleração
+    b.setSize(28, 28)          // hitbox preciso (sprite pode ter padding transparente)
     b.setAllowGravity(true)
     b.setVelocityX(this.facingRight ? 360 : -360)
-    b.setVelocityY(-260)   // arco de pedra
+    b.setVelocityY(-260)       // arco de pedra
 
-    // Timer de segurança — só dispara se o projétil não acertou nada ainda
+    // Timer de segurança — mata o projétil se ainda ativo após 6s
     ;(proj as any).__killTimer = this.scene.time.delayedCall(6000, () => {
-      if (proj.active) proj.setActive(false).setVisible(false)
+      if (proj.active) {
+        proj.setActive(false).setVisible(false)
+        ;(proj.body as Phaser.Physics.Arcade.Body).enable = false
+      }
       ;(proj as any).__killTimer = null
     })
   }

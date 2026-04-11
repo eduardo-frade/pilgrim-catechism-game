@@ -30,10 +30,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // Patrulha
     if (this.x <= this.patrolLeft) {
       body.setVelocityX(this.speed)
-      this.setFlipX(false)
+      this.setFlipX(true)    // sprite padrão olha para esquerda; flip → direita
     } else if (this.x >= this.patrolRight) {
       body.setVelocityX(-this.speed)
-      this.setFlipX(true)
+      this.setFlipX(false)   // sem flip → olha para esquerda
     }
 
     // Não andar para fora das plataformas (verifica borda)
