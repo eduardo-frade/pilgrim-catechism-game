@@ -449,14 +449,16 @@ export class GameScene extends Phaser.Scene {
       .map(([x, , w]) => [x, x + w] as [number, number])
       .sort((a, b) => a[0] - b[0])
 
-    // Buracos — hole.png cobre do chão até o fundo da tela (topo da imagem = borda do chão)
-    const holeH = vh - gndY
+    // Buracos — hole.png alinhado com a superfície visual do landscape2
+    // (desloca 20px para baixo para casar com a borda visível do terreno)
+    const holeTopY = gndY + 20
+    const holeH    = vh - holeTopY
     for (let i = 0; i < groundIntervals.length - 1; i++) {
       const gapStart = groundIntervals[i][1]
       const gapEnd   = groundIntervals[i + 1][0]
       const gapW     = gapEnd - gapStart
       if (gapW < 20) continue
-      this.add.image(gapStart + gapW / 2, gndY + holeH / 2, 'hole')
+      this.add.image(gapStart + gapW / 2, holeTopY + holeH / 2, 'hole')
         .setDisplaySize(gapW, holeH).setDepth(-5)
     }
   }

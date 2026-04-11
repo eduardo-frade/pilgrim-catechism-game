@@ -22,9 +22,9 @@ export class MenuScene extends Phaser.Scene {
     this.add.image(width / 2, height / 2, 'tela_inicial')
       .setDisplaySize(width, height).setDepth(0)
 
-    // ── Personagem andando aleatoriamente ─────────────────────────────
+    // ── Personagem andando aleatoriamente (restrito à metade esquerda) ──
     this.floorY    = height - 70
-    this.rightWall = width - 48
+    this.rightWall = Math.round(width * 0.40)   // não invade a área dos botões
     this.charX     = Phaser.Math.Between(this.leftWall + 20, this.rightWall - 20)
     this.charY     = this.floorY
 
@@ -36,10 +36,15 @@ export class MenuScene extends Phaser.Scene {
     const save    = StorageManager.load()
     const hasSave = save.currentPhase > 1 || save.totalScore > 0
 
+    // Botões posicionados no centro-direita (60% da largura), tamanho fixo ~300×65
+    const btnX = Math.round(width * 0.65)
+    const BTN_W = 300
+    const BTN_H = 65
+
     if (hasSave) {
       // Dois botões: Continuar + Nova Jornada
-      const btnContinuar = this.add.image(width / 2, height * 0.72, 'btn_continuar')
-        .setDepth(6).setInteractive({ useHandCursor: true })
+      const btnContinuar = this.add.image(btnX, Math.round(height * 0.52), 'btn_continuar')
+        .setDisplaySize(BTN_W, BTN_H).setDepth(6).setInteractive({ useHandCursor: true })
       this.addHover(btnContinuar)
       btnContinuar.on('pointerdown', () => {
         this.scene.start('QuizScene', {
@@ -49,8 +54,8 @@ export class MenuScene extends Phaser.Scene {
         })
       })
 
-      const btnNova = this.add.image(width / 2, height * 0.84, 'btn_nova')
-        .setDepth(6).setInteractive({ useHandCursor: true })
+      const btnNova = this.add.image(btnX, Math.round(height * 0.66), 'btn_nova')
+        .setDisplaySize(BTN_W, BTN_H).setDepth(6).setInteractive({ useHandCursor: true })
       this.addHover(btnNova)
       btnNova.on('pointerdown', () => {
         StorageManager.reset()
@@ -58,8 +63,8 @@ export class MenuScene extends Phaser.Scene {
       })
     } else {
       // Só o botão Iniciar
-      const btnIniciar = this.add.image(width / 2, height * 0.78, 'btn_iniciar')
-        .setDepth(6).setInteractive({ useHandCursor: true })
+      const btnIniciar = this.add.image(btnX, Math.round(height * 0.59), 'btn_iniciar')
+        .setDisplaySize(BTN_W, BTN_H).setDepth(6).setInteractive({ useHandCursor: true })
       this.addHover(btnIniciar)
       btnIniciar.on('pointerdown', () => {
         StorageManager.reset()

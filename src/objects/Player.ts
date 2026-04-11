@@ -87,13 +87,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (downDown && onGround) {
       if (!this.isCrouching) {
         this.isCrouching = true
-        this.setScale(PLAYER_SCALE, PLAYER_SCALE * 0.65)
-        body.setSize(36, 42)
+        body.setSize(36, 42)   // hitbox menor — 'down' cuida do visual
       }
       body.setVelocityX(body.velocity.x * 0.6)
     } else if (this.isCrouching) {
       this.isCrouching = false
-      this.setScale(PLAYER_SCALE)
       body.setSize(42, 70)
     }
 
@@ -161,6 +159,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     const proj = this.projectiles.get() as Phaser.Physics.Arcade.Sprite
     if (!proj) return
+
+    // Cancela timer antigo deste objeto do pool (evita que ele mate o novo disparo)
+    const old = (proj as any).__killTimer as Phaser.Time.TimerEvent | undefined
+    if (old) old.remove(false)
+
     proj.setActive(true).setVisible(true)
     proj.setTexture('power')
     proj.setFlipX(!this.facingRight)
@@ -170,8 +173,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     b.setAllowGravity(true)
     b.setVelocityX(this.facingRight ? 360 : -360)
     b.setVelocityY(-260)   // arco de pedra
-    this.scene.time.delayedCall(4000, () => {
+
+    // Timer de segurança — só dispara se o projétil não acertou nada ainda
+    ;(proj as any).__killTimer = this.scene.time.delayedCall(6000, () => {
       if (proj.active) proj.setActive(false).setVisible(false)
+      ;(proj as any).__killTimer = null
     })
   }
 
