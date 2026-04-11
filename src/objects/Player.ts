@@ -84,13 +84,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // ── Agachar ↓ ──────────────────────────────────────────────────
     const downDown = this.cursors.down.isDown
-    if (downDown && onGround) {
-      if (!this.isCrouching) {
+    if (downDown) {
+      if (!this.isCrouching && onGround) {
+        // Inicia apenas quando no chão
         this.isCrouching = true
-        body.setSize(36, 42)   // hitbox menor — 'down' cuida do visual
+        body.setSize(36, 42)
       }
-      body.setVelocityX(body.velocity.x * 0.6)
+      if (this.isCrouching) body.setVelocityX(body.velocity.x * 0.6)
     } else if (this.isCrouching) {
+      // Sai SOMENTE quando a tecla é solta (não depende de onGround)
       this.isCrouching = false
       body.setSize(42, 70)
     }
@@ -155,7 +157,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   private shoot() {
     this.isShooting = true
-    this.scene.time.delayedCall(1440, () => { this.isShooting = false })
+    this.scene.time.delayedCall(720, () => { this.isShooting = false })
 
     const proj = this.projectiles.get() as Phaser.Physics.Arcade.Sprite
     if (!proj) return

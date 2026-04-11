@@ -22,8 +22,9 @@ export class MenuScene extends Phaser.Scene {
     this.add.image(width / 2, height / 2, 'tela_inicial')
       .setDisplaySize(width, height).setDepth(0)
 
-    // ── Personagem (restrito à metade esquerda) ───────────────────────
-    this.floorY    = height - 70
+    // ── Personagem (mesma altura visual do jogo, metade esquerda) ────────
+    // floorY = centro do sprite quando parado no chão (pés em height*0.72)
+    this.floorY    = Math.round(height * 0.72) - 37
     this.rightWall = Math.round(width * 0.38)
     this.charX     = Phaser.Math.Between(this.leftWall + 20, this.rightWall - 20)
     this.charY     = this.floorY
@@ -37,12 +38,12 @@ export class MenuScene extends Phaser.Scene {
     const save    = StorageManager.load()
     const hasSave = save.currentPhase > 1 || save.totalScore > 0
 
-    const BTN_W = 260          // largura alvo
-    const btnX  = Math.round(width * 0.65)   // centro-direita
+    const BTN_W = 200           // largura — menores e centralizados
+    const btnX  = width / 2    // centralizado
 
     if (hasSave) {
       // "Iniciar Jornada" no topo, "Continuar Jornada" abaixo
-      const btnIniciar = this.makeBtn('btn_iniciar',  btnX, Math.round(height * 0.50), BTN_W)
+      const btnIniciar = this.makeBtn('btn_iniciar',   btnX, Math.round(height * 0.50), BTN_W)
       btnIniciar.on('pointerdown', () => {
         StorageManager.reset()
         this.scene.start('QuizScene', { phaseIndex: 0, score: 0, lives: 1 })
@@ -58,7 +59,7 @@ export class MenuScene extends Phaser.Scene {
       })
     } else {
       // Só "Iniciar Jornada"
-      const btnIniciar = this.makeBtn('btn_iniciar', btnX, Math.round(height * 0.58), BTN_W)
+      const btnIniciar = this.makeBtn('btn_iniciar', btnX, Math.round(height * 0.57), BTN_W)
       btnIniciar.on('pointerdown', () => {
         StorageManager.reset()
         this.scene.start('QuizScene', { phaseIndex: 0, score: 0, lives: 1 })
