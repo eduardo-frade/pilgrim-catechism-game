@@ -46,7 +46,13 @@ export class BootScene extends Phaser.Scene {
     this.load.image('btn_iniciar',      'assets/sprites/botao_iniciar_jornada.png')
     this.load.image('btn_continuar',    'assets/sprites/continuar_jornada.png')
     this.load.image('btn_nova',         'assets/sprites/nova_jornada.png')
-    // ── Áudio ────────────────────────────────────────────────────────
+    // ── Música de fundo das fases ────────────────────────────────────
+    // Coloque os arquivos MP3 em assets/audio/music/ com os nomes abaixo.
+    // O jogo ignora silenciosamente se o arquivo não existir.
+    this.load.audio('music_fase_1', 'assets/audio/music/trilha_01.mp3')
+    // Futuras trilhas:
+    // this.load.audio('music_fase_2', 'assets/audio/music/trilha_02.mp3')
+    // ── Narração ─────────────────────────────────────────────────────
     AudioManager.preloadAudio(this)
   }
 

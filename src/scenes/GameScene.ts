@@ -238,10 +238,11 @@ export class GameScene extends Phaser.Scene {
   private score           = 0
   private lives           = 1
   private scoreAtLastLife  = 0
-  private scoreAtPhaseStart = 0   // score ao entrar na fase — restaurado ao morrer
+  private scoreAtPhaseStart = 0
   private world           = worlds.worlds[0]
   private levelWidth      = 0
   private phaseEnded      = false
+  private bgMusic?: Phaser.Sound.BaseSound
 
   constructor() { super({ key: 'GameScene' }) }
 
@@ -263,8 +264,9 @@ export class GameScene extends Phaser.Scene {
 
     this.drawBackground()
     this.buildPlatforms(layout)
-    this.spawnGoal(layout)           // goal antes do player p/ overlap funcionar
+    this.spawnGoal(layout)
     this.spawnPlayer(layout)
+    this.startMusic()
     this.spawnEnemies(layout)
     this.spawnCollectibles(layout)
     this.setupCamera()
@@ -605,5 +607,30 @@ export class GameScene extends Phaser.Scene {
       stroke: '#1a0a2e', strokeThickness: 3
     }).setDepth(15).setOrigin(0.5)
     this.tweens.add({ targets: txt, y: txt.y - 48, alpha: 0, duration: 900, onComplete: () => txt.destroy() })
+  }
+
+  // ── Música de fundo ───────────────────────────────────────────────────────
+  // Para adicionar mais trilhas: coloque os arquivos em assets/audio/music/ e
+  // mapeie a chave correspondente em MUSIC_TRACKS abaixo.
+  private startMusic() {
+    // Mapa de fases → chave de áudio (todas usam trilha_01 por enquanto)
+    const MUSIC_TRACKS: Record<number, string> = {
+      0: 'music_fase_1',
+      1: 'music_fase_1',
+      2: 'music_fase_1',
+      3: 'music_fase_1',
+      4: 'music_fase_1',
+      5: 'music_fase_1',
+      6: 'music_fase_1',
+      7: 'music_fase_1',
+    }
+    const key = MUSIC_TRACKS[this.phaseIndex] ?? 'music_fase_1'
+    if (!this.cache.audio.exists(key)) return   // arquivo não carregado, ignora
+
+    this.bgMusic = this.sound.add(key, { loop: true, volume: 0.5 })
+    this.bgMusic.play()
+
+    // Para automaticamente quando a cena encerra ou reinicia
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.bgMusic?.stop())
   }
 }
