@@ -118,17 +118,19 @@ export class HUDScene extends Phaser.Scene {
   private sendAction(action: string, active: boolean) {
     const gs = this.scene.get('GameScene') as Phaser.Scene & {
       playerRef?: {
-        moveLeft:  (b: boolean) => void
-        moveRight: (b: boolean) => void
-        jump:      () => void
-        shootNow:  () => void
+        moveLeft:    (b: boolean) => void
+        moveRight:   (b: boolean) => void
+        jump:        () => void
+        jumpRelease: () => void
+        shootNow:    () => void
+        shootRelease:() => void
       }
     }
     const p = gs?.playerRef
     if (!p) return
     if (action === 'left')  p.moveLeft(active)
     if (action === 'right') p.moveRight(active)
-    if (action === 'jump'  && active) p.jump()
-    if (action === 'shoot' && active) p.shootNow()
+    if (action === 'jump')  { if (active) p.jump(); else p.jumpRelease() }
+    if (action === 'shoot') { if (active) p.shootNow(); else p.shootRelease() }
   }
 }

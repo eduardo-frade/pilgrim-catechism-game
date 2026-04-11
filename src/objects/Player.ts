@@ -20,6 +20,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private shootState: 'normal' | 'jump' | 'down' = 'normal'
   private facingRight  = true
 
+  // ── Estado dos botões de toque (mobile) ──────────────────────────
+  private touchLeft        = false
+  private touchRight       = false
+  private touchJumpHeld    = false   // segurado → pulo alto (Mario-like)
+  private touchJumpPressed = false   // one-shot para iniciar o pulo
+  private touchShootHeld   = false   // segurado → repete o disparo
+
   private hearts = 3
   private onHeartChangeCallback?: (h: number) => void
   private onDeathCallback?: () => void
@@ -89,21 +96,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (!this.isCrouching && onGround) {
         this.isCrouching = true
         body.setSize(36, 42)
-        // O Phaser recentraliza o corpo ao mudar o tamanho; como o hitbox ficou
-        // 28px mais curto (70→42), o fundo sobe 14px. Compensamos deslocando
-        // o offset para baixo o suficiente para manter os pés na mesma posição.
         body.setOffset(body.offset.x, body.offset.y + 14)
       }
       if (this.isCrouching) body.setVelocityX(body.velocity.x * 0.6)
     } else if (this.isCrouching) {
-      // Sai SOMENTE quando a tecla é solta
       this.isCrouching = false
-      body.setSize(42, 70)   // auto-recentraliza e restaura o offset
+      body.setSize(42, 70)
     }
 
-    // ── Mover ← → ──────────────────────────────────────────────────
-    const leftDown  = this.cursors.left.isDown
-    const rightDown = this.cursors.right.isDown
+    // ── Mover ← → (teclado ou toque) ──────────────────────────────
+    const leftDown  = this.cursors.left.isDown  || this.touchLeft
+    const rightDown = this.cursors.right.isDown || this.touchRight
 
     if (!this.isCrouching) {
       if (leftDown) {
@@ -117,21 +120,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    // ── Pular SPACE — estilo Mario ──────────────────────────────────
-    if (Phaser.Input.Keyboard.JustDown(this.keySpace) &&
-        !this.isCrouching && (this.canJump || this.jumpCount < 1)) {
+    // ── Pular SPACE ou toque — estilo Mario ────────────────────────
+    const jumpTriggered = Phaser.Input.Keyboard.JustDown(this.keySpace) || this.touchJumpPressed
+    this.touchJumpPressed = false   // consumir o one-shot de toque
+
+    if (jumpTriggered && !this.isCrouching && (this.canJump || this.jumpCount < 1)) {
       body.setVelocityY(JUMP_FORCE)
       this.jumpCount++
       this.canJump = false
     }
 
-    // Pulo variável: soltar cedo = pulo menor (Mario-like)
-    if (!this.keySpace.isDown && body.velocity.y < -100) {
+    // Pulo variável: soltar cedo = pulo menor (teclado e toque)
+    const jumpHeld = this.keySpace.isDown || this.touchJumpHeld
+    if (!jumpHeld && body.velocity.y < -100) {
       body.setVelocityY(body.velocity.y + 55)
     }
 
-    // ── Arremessar V ────────────────────────────────────────────────
-    if (Phaser.Input.Keyboard.JustDown(this.keyV)) {
+    // ── Arremessar V ou toque (repete enquanto segurar) ────────────
+    const keyVPressed = Phaser.Input.Keyboard.JustDown(this.keyV)
+    if (keyVPressed || this.touchShootHeld) {
       const now = this.scene.time.now
       if (now - this.lastShot > SHOOT_COOLDOWN) {
         this.shoot(onGround); this.lastShot = now
@@ -204,24 +211,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     })
   }
 
-  // Controles de toque (HUD)
-  moveLeft(active: boolean) {
-    (this.body as Phaser.Physics.Arcade.Body).setVelocityX(active ? -MOVE_SPEED : 0)
-    if (active) { this.setFlipX(true); this.facingRight = false }
-  }
-  moveRight(active: boolean) {
-    (this.body as Phaser.Physics.Arcade.Body).setVelocityX(active ? MOVE_SPEED : 0)
-    if (active) { this.setFlipX(false); this.facingRight = true }
-  }
-  jump() {
-    const body = this.body as Phaser.Physics.Arcade.Body
-    if (body.blocked.down || this.jumpCount < 1) {
-      body.setVelocityY(JUMP_FORCE); this.jumpCount++
-    }
-  }
-  shootNow() {
-    const now = this.scene.time.now
-    const onGround = (this.body as Phaser.Physics.Arcade.Body).blocked.down
-    if (now - this.lastShot > SHOOT_COOLDOWN) { this.shoot(onGround); this.lastShot = now }
-  }
+  // ── API de toque para o HUDScene ────────────────────────────────
+  // Estado é guardado e consumido no update() — igual ao teclado físico
+  moveLeft(active: boolean)   { this.touchLeft  = active }
+  moveRight(active: boolean)  { this.touchRight = active }
+  jump()                      { this.touchJumpPressed = true; this.touchJumpHeld = true }
+  jumpRelease()               { this.touchJumpHeld = false }
+  shootNow()                  { this.touchShootHeld = true }
+  shootRelease()              { this.touchShootHeld = false }
 }
