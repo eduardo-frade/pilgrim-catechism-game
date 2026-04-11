@@ -329,9 +329,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private checkScoreMilestone() {
-    if (this.score - this.scoreAtLastLife >= 100 && this.lives < 3) {
-      this.lives = Math.min(3, this.lives + 1)
-      this.scoreAtLastLife = this.score
+    if (this.score - this.scoreAtLastLife >= 500) {
+      this.lives++
+      this.scoreAtLastLife += 500   // avança exatamente 500 → próximo marco em +500
       StorageManager.save({ lives: this.lives })
       this.scene.get('HUDScene').events.emit('updateLives', this.lives)
       this.showBanner('✨ +1 Vida! ✨', '#f5c842')
