@@ -471,25 +471,25 @@ export class GameScene extends Phaser.Scene {
     const height = this.game.canvas.height
 
     // Poste da bandeira (estilo Mario)
-    const pole = this.add.graphics().setDepth(3)
-    pole.fillStyle(0xaaaaaa, 1); pole.fillRect(x - 2, y - 80, 4, 80)
-    pole.fillStyle(0xdddddd, 1); pole.fillRect(x - 2, y - 80, 2, 80)
+    const pole = this.add.graphics().setPosition(x, y).setDepth(3)
+    pole.fillStyle(0xaaaaaa, 1); pole.fillRect(-2, -80, 4, 80)
+    pole.fillStyle(0xdddddd, 1); pole.fillRect(-2, -80, 2, 80)
 
-    // Bandeira amarela
-    const flag = this.add.graphics().setDepth(3)
+    // Bandeira amarela — posicionada no objeto para que o tween de onda funcione corretamente
+    const flag = this.add.graphics().setPosition(x, y).setDepth(3)
     flag.fillStyle(0xf5c842, 1)
-    flag.fillTriangle(x + 2, y - 80, x + 2, y - 56, x + 30, y - 68)
+    flag.fillTriangle(2, -80, 2, -56, 30, -68)
     flag.fillStyle(0xe8a020, 0.5)
-    flag.fillTriangle(x + 2, y - 80, x + 2, y - 68, x + 18, y - 74)
+    flag.fillTriangle(2, -80, 2, -68, 18, -74)
 
-    // Ondular a bandeira
+    // Ondular a bandeira (3px relativo ao ponto de origem do objeto)
     this.tweens.add({
-      targets: flag, x: '+=3', yoyo: true, repeat: -1, duration: 300, ease: 'Sine.easeInOut'
+      targets: flag, x: x + 3, yoyo: true, repeat: -1, duration: 300, ease: 'Sine.easeInOut'
     })
 
-    // Aura brilhante no chão
-    const aura = this.add.graphics().setDepth(2)
-    aura.fillStyle(0xf5c842, 0.25); aura.fillEllipse(x, height - 42, 80, 20)
+    // Aura brilhante no chão — origem no centro para que scaleX expanda corretamente
+    const aura = this.add.graphics().setPosition(x, height - 42).setDepth(2)
+    aura.fillStyle(0xf5c842, 0.25); aura.fillEllipse(0, 0, 80, 20)
     this.tweens.add({ targets: aura, alpha: 0.5, scaleX: 1.3, yoyo: true, repeat: -1, duration: 700 })
 
     // Linha vertical de luz

@@ -122,7 +122,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const jumpTriggered = Phaser.Input.Keyboard.JustDown(this.keySpace) || this.touchJumpPressed
     this.touchJumpPressed = false   // consumir o one-shot de toque
 
-    if (jumpTriggered && !this.isCrouching && (this.canJump || this.jumpCount < 1)) {
+    // jumpCount < 2 → permite pulo duplo no ar (1º pulo do chão + 1 extra no ar)
+    if (jumpTriggered && !this.isCrouching && (this.canJump || this.jumpCount < 2)) {
       body.setVelocityY(JUMP_FORCE)
       this.jumpCount++
       this.canJump = false
