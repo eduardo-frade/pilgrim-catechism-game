@@ -86,15 +86,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const downDown = this.cursors.down.isDown
     if (downDown) {
       if (!this.isCrouching && onGround) {
-        // Inicia apenas quando no chão
         this.isCrouching = true
         body.setSize(36, 42)
+        // O Phaser recentraliza o corpo ao mudar o tamanho; como o hitbox ficou
+        // 28px mais curto (70→42), o fundo sobe 14px. Compensamos deslocando
+        // o offset para baixo o suficiente para manter os pés na mesma posição.
+        body.setOffset(body.offset.x, body.offset.y + 14)
       }
       if (this.isCrouching) body.setVelocityX(body.velocity.x * 0.6)
     } else if (this.isCrouching) {
-      // Sai SOMENTE quando a tecla é solta (não depende de onGround)
+      // Sai SOMENTE quando a tecla é solta
       this.isCrouching = false
-      body.setSize(42, 70)
+      body.setSize(42, 70)   // auto-recentraliza e restaura o offset
     }
 
     // ── Mover ← → ──────────────────────────────────────────────────
