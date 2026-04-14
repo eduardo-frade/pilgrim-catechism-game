@@ -11,12 +11,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private keySpace!: Phaser.Input.Keyboard.Key
   private projectiles!: Phaser.Physics.Arcade.Group
 
-  private canJump     = false
-  private jumpCount   = 0
-  private lastShot    = 0
-  private isHurt      = false
-  private isCrouching = false
-  private facingRight = true
+  private canJump        = false
+  private jumpCount      = 0
+  private lastShot       = 0
+  private throwFlashUntil = 0   // timestamp até quando mostrar sprite de arremesso (~2 frames)
+  private isHurt         = false
+  private isCrouching    = false
+  private facingRight    = true
 
   // ── Estado dos botões de toque (mobile) ──────────────────────────
   private touchLeft        = false
@@ -100,6 +101,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     } else if (this.isCrouching) {
       this.isCrouching = false
       body.setSize(42, 70)
+      body.setOffset(body.offset.x, body.offset.y - 14)   // restaura offset adicionado no agachar
     }
 
     // ── Mover ← → (teclado ou toque) ──────────────────────────────
@@ -148,15 +150,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private updateSprite(onGround: boolean, leftDown: boolean, rightDown: boolean) {
-    // Pose de arremesso persiste ENQUANTO a tecla/botão estiver pressionada
-    const throwing = this.keyV.isDown || this.touchShootHeld
+    // Pose de arremesso dura ~2 frames (33ms) por disparo, mesmo segurando V
+    const throwing = this.scene.time.now < this.throwFlashUntil
 
     if (this.isHurt) {
       this.setTexture('hurt')
     } else if (throwing) {
-      if (!onGround)          this.setTexture('jump_throwing_light')
-      else if (this.isCrouching) this.setTexture('down_throwing_light')
-      else                    this.setTexture('throwing_light')
+      // Usa variante específica se o asset existir; senão usa throwing_light
+      if (!onGround && this.scene.textures.exists('jump_throwing_light'))
+        this.setTexture('jump_throwing_light')
+      else if (this.isCrouching && this.scene.textures.exists('down_throwing_light'))
+        this.setTexture('down_throwing_light')
+      else
+        this.setTexture('throwing_light')
     } else if (this.isCrouching) {
       this.setTexture('down2')
     } else if (!onGround) {
@@ -191,6 +197,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     b.setAllowGravity(true)
     b.setVelocityX(this.facingRight ? 360 : -360)
     b.setVelocityY(-260)       // arco de pedra
+
+    // Ativa sprite de arremesso por ~2 frames (33ms)
+    this.throwFlashUntil = this.scene.time.now + 34
 
     // Timer de segurança — mata o projétil se ainda ativo após 6s
     ;(proj as any).__killTimer = this.scene.time.delayedCall(6000, () => {
