@@ -89,43 +89,39 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (onGround) { this.jumpCount = 0; this.canJump = true }
 
-    // ── Agachar ↓ ──────────────────────────────────────────────────
+    // ── Agachar ↓ — apenas visual, zero física ─────────────────────
+    // isCrouching só controla o sprite (down2); o corpo físico nunca muda
     const downDown = this.cursors.down.isDown
-    if (downDown) {
-      if (!this.isCrouching && onGround) {
-        this.isCrouching = true
-        body.setSize(36, 42)
-        body.setOffset(body.offset.x, body.offset.y + 14)
-      }
-      if (this.isCrouching) body.setVelocityX(body.velocity.x * 0.6)
-    } else if (this.isCrouching) {
-      this.isCrouching = false
-      body.setSize(42, 70)
-      body.setOffset(body.offset.x, body.offset.y - 14)   // restaura offset adicionado no agachar
-    }
+    this.isCrouching = downDown && onGround
 
     // ── Mover ← → (teclado ou toque) ──────────────────────────────
     const leftDown  = this.cursors.left.isDown  || this.touchLeft
     const rightDown = this.cursors.right.isDown || this.touchRight
 
-    if (!this.isCrouching) {
-      if (leftDown) {
-        body.setVelocityX(-MOVE_SPEED)
-        this.setFlipX(true); this.facingRight = false
-      } else if (rightDown) {
-        body.setVelocityX(MOVE_SPEED)
-        this.setFlipX(false); this.facingRight = true
-      } else {
-        body.setVelocityX(body.velocity.x * 0.65)
-      }
+    if (leftDown) {
+      body.setVelocityX(-MOVE_SPEED)
+      this.setFlipX(true); this.facingRight = false
+    } else if (rightDown) {
+      body.setVelocityX(MOVE_SPEED)
+      this.setFlipX(false); this.facingRight = true
+    } else {
+      body.setVelocityX(body.velocity.x * 0.65)
     }
 
-    // ── Pular SPACE ou toque — estilo Mario ────────────────────────
+    // ── Pular / descer plataforma ─────────────────────────────────
     const jumpTriggered = Phaser.Input.Keyboard.JustDown(this.keySpace) || this.touchJumpPressed
-    this.touchJumpPressed = false   // consumir o one-shot de toque
+    this.touchJumpPressed = false
 
-    // jumpCount < 2 → permite pulo duplo no ar (1º pulo do chão + 1 extra no ar)
-    if (jumpTriggered && !this.isCrouching && (this.canJump || this.jumpCount < 2)) {
+    // Descer pela plataforma flutuante: ↓ + Pular
+    // Chão principal tem body.bottom ≈ 285; plataformas flutuantes < 260
+    const ON_FLOAT_THRESHOLD = 260
+    if (this.isCrouching && jumpTriggered && onGround && body.bottom < ON_FLOAT_THRESHOLD) {
+      body.checkCollision.down = false
+      this.scene.time.delayedCall(350, () => {
+        if (this.body) (this.body as Phaser.Physics.Arcade.Body).checkCollision.down = true
+      })
+    } else if (jumpTriggered && !this.isCrouching && (this.canJump || this.jumpCount < 2)) {
+      // Pulo normal / pulo duplo
       body.setVelocityY(JUMP_FORCE)
       this.jumpCount++
       this.canJump = false
