@@ -396,7 +396,7 @@ export class GameScene extends Phaser.Scene {
       StorageManager.reset()
       this.scene.start('MenuScene')
     } else {
-      this.scene.start('QuizScene', { phaseIndex: nextPhase, score: this.score, lives: this.lives })
+      this.scene.start('QuizScene', { phaseIndex: nextPhase, score: this.score, lives: this.lives, scoreBeforePhase: this.scoreAtPhaseStart })
     }
   }
 
@@ -569,7 +569,7 @@ export class GameScene extends Phaser.Scene {
         const pb = this.player.body as Phaser.Physics.Arcade.Body
         if (pb.velocity.y > 50 && this.player.y < enemy.y - 8) {
           enemy.stomp()
-          this.addScore(50, '+50 ⭐')
+          this.addScore(5, '+5 ⭐')
           pb.setVelocityY(-600)  // quica igual Mario
         } else {
           this.player.takeDamage()
@@ -584,7 +584,7 @@ export class GameScene extends Phaser.Scene {
         p.setActive(false).setVisible(false)
         ;(p.body as Phaser.Physics.Arcade.Body).enable = false
         enemy.hitByProjectile()
-        this.addScore(30, '+30 ⭐')
+        this.addScore(5, '+5 ⭐')
       })
     })
 
@@ -594,13 +594,17 @@ export class GameScene extends Phaser.Scene {
         if (!col.active) return
         col.collect()
         if (col.collectibleType === 'point') {
-          this.addScore(1, '+1 ✦')
+          this.addScore(25, '+25 ✦')
         } else {
           if (this.player.addHeart()) {
             this.scene.get('HUDScene').events.emit('updateHearts', this.player.getHearts())
             this.showFloating('❤️ +1 Coração!', '#ff6b6b')
           } else {
-            this.addScore(10, '+10 ⭐')
+            // Corações cheios → converte em vida extra
+            this.lives++
+            StorageManager.save({ lives: this.lives })
+            this.scene.get('HUDScene').events.emit('updateLives', this.lives)
+            this.showBanner('❤️ +1 Vida!', '#ff6b6b')
           }
         }
       })

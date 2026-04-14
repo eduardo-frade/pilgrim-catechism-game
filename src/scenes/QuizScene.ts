@@ -8,6 +8,7 @@ interface QuizData {
   phaseIndex: number
   score: number
   lives?: number
+  scoreBeforePhase?: number   // pontuação no início da fase recém-completada
 }
 
 const CLR_TEXT    = '#3a1f00'
@@ -16,21 +17,21 @@ const BTN_CORRECT = 0x27ae60
 const BTN_WRONG   = 0xe74c3c
 
 export class QuizScene extends Phaser.Scene {
-  private phaseIndex = 0
-  private score      = 0
-  private lives      = 1
-  private attempts   = 0
+  private phaseIndex        = 0
+  private score             = 0
+  private lives             = 1
+  private scoreBeforePhase  = 0   // score a restaurar se errar a pergunta
   private question!: typeof catechism[0]
   private world = worlds.worlds[0]
 
   constructor() { super({ key: 'QuizScene' }) }
 
   init(data: QuizData) {
-    this.phaseIndex = data.phaseIndex ?? 0
-    this.score      = data.score  ?? StorageManager.load().totalScore
-    this.lives      = data.lives  ?? StorageManager.load().lives
-    this.question   = catechism[this.phaseIndex % catechism.length]
-    this.attempts   = 0
+    this.phaseIndex       = data.phaseIndex ?? 0
+    this.score            = data.score  ?? StorageManager.load().totalScore
+    this.lives            = data.lives  ?? StorageManager.load().lives
+    this.scoreBeforePhase = data.scoreBeforePhase ?? this.score
+    this.question         = catechism[this.phaseIndex % catechism.length]
   }
 
   create() {
@@ -152,14 +153,18 @@ export class QuizScene extends Phaser.Scene {
           this.scene.start('GameScene', { phaseIndex: this.phaseIndex, score: this.score, lives: this.lives })
         })
       } else {
-        this.attempts++
+        // Resposta errada — sem nova tentativa
+        // Volta para a fase anterior e perde os pontos feitos nela
         overlay.setFillStyle(BTN_WRONG, 0.55)
-        const key = `wrong_${Math.min(this.attempts, 3)}` as 'wrong_1' | 'wrong_2' | 'wrong_3'
-        AudioManager.play(key)
-        const msgs = ['Quase! Tente de novo!', 'Não desista! Você consegue!', 'Pense bem e tente novamente!']
-        this.showEncouragement(msgs[Math.min(this.attempts - 1, 2)])
+        AudioManager.play('wrong_1')
+        this.showEncouragement('Resposta errada! Repita a fase!')
         this.time.delayedCall(1400, () => {
-          this.scene.restart({ phaseIndex: this.phaseIndex, score: this.score, lives: this.lives })
+          const prevPhase = Math.max(0, this.phaseIndex - 1)
+          this.scene.start('GameScene', {
+            phaseIndex: prevPhase,
+            score: this.scoreBeforePhase,
+            lives: this.lives
+          })
         })
       }
     })
