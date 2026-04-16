@@ -229,7 +229,9 @@ export class GameScene extends Phaser.Scene {
   private player!: Player
   // Exposto para o HUDScene controlar via toque
   get playerRef() { return this.player }
-  private platforms!: Phaser.Physics.Arcade.StaticGroup
+  private groundGroup!:  Phaser.Physics.Arcade.StaticGroup
+  private floatGroup!:   Phaser.Physics.Arcade.StaticGroup
+  private floatCollider?: Phaser.Physics.Arcade.Collider
   private goalSprite!: Phaser.Physics.Arcade.Sprite
   private enemies:      Enemy[]       = []
   private collectibles: Collectible[] = []
@@ -266,6 +268,7 @@ export class GameScene extends Phaser.Scene {
     this.buildPlatforms(layout)
     this.spawnGoal(layout)
     this.spawnPlayer(layout)
+    this.player.setDropThrough(() => this.dropThrough())
     this.startMusic()
     this.spawnEnemies(layout)
     this.spawnCollectibles(layout)
@@ -420,7 +423,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private buildPlatforms(layout: typeof PHASE_LAYOUTS[0]) {
-    this.platforms = this.physics.add.staticGroup()
+    this.groundGroup = this.physics.add.staticGroup()
+    this.floatGroup  = this.physics.add.staticGroup()
     const vh = this.game.canvas.height
 
     // Shifted platforms
@@ -430,14 +434,14 @@ export class GameScene extends Phaser.Scene {
       const isGround = y + Y_SHIFT + h >= vh - 10  // checa y original (antes do shift)
 
       if (isGround) {
-        // Chão — hitbox simples, visual pelo landscape
-        const block = this.platforms.create(x + w / 2, y + h / 2, 'platform_tile') as Phaser.Physics.Arcade.Sprite
+        // Chão — nunca atravessável
+        const block = this.groundGroup.create(x + w / 2, y + h / 2, 'platform_tile') as Phaser.Physics.Arcade.Sprite
         block.setDisplaySize(w, h).setAlpha(0).refreshBody()
       } else {
-        // Plataforma flutuante — superfície visível da oval fica ~25% abaixo do topo da imagem
+        // Plataforma flutuante — pode ser atravessada (drop-through)
         const visualH = Math.min(Math.round(w * 0.55), 60)
-        const surfaceOffset = Math.round(visualH * 0.25)  // desloca hitbox para alinhar com a borda da oval
-        const block = this.platforms.create(x + w / 2, y + surfaceOffset + h / 2, 'platform_tile') as Phaser.Physics.Arcade.Sprite
+        const surfaceOffset = Math.round(visualH * 0.25)
+        const block = this.floatGroup.create(x + w / 2, y + surfaceOffset + h / 2, 'platform_tile') as Phaser.Physics.Arcade.Sprite
         block.setDisplaySize(w, h).setAlpha(0).refreshBody()
         this.add.image(x + w / 2, y + visualH / 2, 'platform_tile')
           .setDisplaySize(w, visualH).setDepth(2)
@@ -540,20 +544,31 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, -200, this.levelWidth, this.game.canvas.height + 300)
   }
 
-  private setupCollisions() {
-    this.physics.add.collider(this.player, this.platforms)
+  // ── Drop-through: desativa colisão com flutuantes por 200ms ─────────
+  dropThrough() {
+    if (!this.floatCollider) return
+    this.floatCollider.active = false
+    this.time.delayedCall(200, () => {
+      if (this.floatCollider) this.floatCollider.active = true
+    })
+  }
 
-    // ── Projétil para na plataforma (não atravessa) ───────────────────
-    this.physics.add.collider(
-      this.player.getProjectiles(), this.platforms,
-      (proj) => {
-        const p = proj as Phaser.Physics.Arcade.Sprite
-        if (p.active) {
-          p.setActive(false).setVisible(false)
-          ;(p.body as Phaser.Physics.Arcade.Body).enable = false
-        }
+  private setupCollisions() {
+    // Chão: sempre ativo
+    this.physics.add.collider(this.player, this.groundGroup)
+    // Flutuantes: pode ser desativado temporariamente no drop-through
+    this.floatCollider = this.physics.add.collider(this.player, this.floatGroup)
+
+    // ── Projétil para nas plataformas ────────────────────────────────
+    const killProj: Phaser.Types.Physics.Arcade.ArcadePhysicsCallback = (proj) => {
+      const p = proj as Phaser.Physics.Arcade.Sprite
+      if (p.active) {
+        p.setActive(false).setVisible(false)
+        ;(p.body as Phaser.Physics.Arcade.Body).enable = false
       }
-    )
+    }
+    this.physics.add.collider(this.player.getProjectiles(), this.groundGroup, killProj)
+    this.physics.add.collider(this.player.getProjectiles(), this.floatGroup,  killProj)
 
     // ── Goal — overlap com sprite estático ────────────────────────────
     this.physics.add.overlap(this.player, this.goalSprite, () => {
@@ -561,7 +576,8 @@ export class GameScene extends Phaser.Scene {
     })
 
     this.enemies.forEach(enemy => {
-      this.physics.add.collider(enemy, this.platforms)
+      this.physics.add.collider(enemy, this.groundGroup)
+      this.physics.add.collider(enemy, this.floatGroup)
 
       // Pisou no inimigo
       this.physics.add.overlap(this.player, enemy, () => {

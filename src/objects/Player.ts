@@ -18,6 +18,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private isHurt         = false
   private isCrouching    = false
   private facingRight    = true
+  private onDropThrough?: () => void
 
   // ── Estado dos botões de toque (mobile) ──────────────────────────
   private touchLeft        = false
@@ -54,6 +55,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   getHearts()       { return this.hearts }
   onHeartChange(cb: (h: number) => void) { this.onHeartChangeCallback = cb }
   onDeath(cb: () => void)                { this.onDeathCallback = cb }
+  setDropThrough(fn: () => void)         { this.onDropThrough = fn }
 
   takeDamage() {
     if (this.isHurt) return
@@ -113,18 +115,21 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.touchJumpPressed = false
 
     // Descer pela plataforma flutuante: ↓ + Pular
-    // Chão principal tem body.bottom ≈ 285; plataformas flutuantes < 260
-    const ON_FLOAT_THRESHOLD = 260
-    if (this.isCrouching && jumpTriggered && onGround && body.bottom < ON_FLOAT_THRESHOLD) {
-      body.checkCollision.down = false
-      this.scene.time.delayedCall(350, () => {
-        if (this.body) (this.body as Phaser.Physics.Arcade.Body).checkCollision.down = true
-      })
-    } else if (jumpTriggered && !this.isCrouching && (this.canJump || this.jumpCount < 2)) {
-      // Pulo normal / pulo duplo
-      body.setVelocityY(JUMP_FORCE)
-      this.jumpCount++
-      this.canJump = false
+    // GameScene desativa o collider das flutuantes por 200ms (nunca afeta o chão)
+    if (this.isCrouching && jumpTriggered && onGround) {
+      this.onDropThrough?.()
+      this.canJump = false   // força queda real, sem pulo imediato
+    } else if (jumpTriggered && !this.isCrouching) {
+      // Pulo normal (chão) ou pulo duplo (somente perto do apex)
+      // gravity=1400, JUMP_FORCE=-600 → apex em ~0.43s
+      // 2 frames de queda ≈ velocity.y ≤ 47 px/s
+      // Permite duplo pulo apenas quando velocity.y ∈ [-60, 50] (stall ± 2 frames)
+      const atApex = body.velocity.y > -60 && body.velocity.y < 50
+      if (this.canJump || (this.jumpCount < 2 && atApex)) {
+        body.setVelocityY(JUMP_FORCE)
+        this.jumpCount++
+        this.canJump = false
+      }
     }
 
     // Pulo variável: soltar cedo = pulo menor (teclado e toque)

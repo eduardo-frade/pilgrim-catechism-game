@@ -128,24 +128,21 @@ export class QuizScene extends Phaser.Scene {
       wordWrap: { width: textWrap }, align: 'center'
     }).setOrigin(0.5).setDepth(5)
 
-    // Zona interativa cobre botão + texto (linha inteira)
-    const zoneCX = Math.round((btnCX - bw / 2 + scrollEnd) / 2)  // ~302 — centro da zona
-    const zoneW  = scrollEnd - (btnCX - bw / 2)                   // ~548 — largura da zona
-
-    const zone = this.add.zone(zoneCX, y, zoneW, bh)
+    // Zona interativa — apenas sobre o botão colorido (não sobre o texto)
+    const zone = this.add.zone(btnCX, y, bw, bh)
       .setDepth(6).setInteractive({ useHandCursor: true })
 
-    // Overlay de feedback (inicialmente transparente), mesma área da zona
-    const overlay = this.add.rectangle(zoneCX, y, zoneW, bh, 0x000000, 0)
+    // Overlay de hover — apenas sobre o botão (sem cores de acerto/erro)
+    const overlay = this.add.rectangle(btnCX, y, bw, bh, 0x000000, 0)
       .setDepth(5.5)
 
-    zone.on('pointerover', () => overlay.setFillStyle(0xffffff, 0.15))
+    zone.on('pointerover', () => overlay.setFillStyle(0xffffff, 0.20))
     zone.on('pointerout',  () => overlay.setFillStyle(0x000000, 0))
 
     zone.on('pointerdown', () => {
       zone.disableInteractive()
       if (isCorrect) {
-        overlay.setFillStyle(BTN_CORRECT, 0.55)
+        overlay.setFillStyle(0xffffff, 0.35)
         AudioManager.play('correct')
         StorageManager.markQuestionAnswered(this.question.number)
         StorageManager.save({ currentPhase: this.phaseIndex + 1 })
@@ -155,7 +152,7 @@ export class QuizScene extends Phaser.Scene {
       } else {
         // Resposta errada — sem nova tentativa
         // Volta para a fase anterior e perde os pontos feitos nela
-        overlay.setFillStyle(BTN_WRONG, 0.55)
+        overlay.setFillStyle(0x000000, 0.20)
         AudioManager.play('wrong_1')
         this.showEncouragement('Resposta errada! Repita a fase!')
         this.time.delayedCall(1400, () => {
